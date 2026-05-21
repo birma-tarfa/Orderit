@@ -63,13 +63,19 @@ export function useAuth() {
     loadSession();
 
     const { data: authListener } = createClient().auth.onAuthStateChange(
-      () => {
-        loadSession();
+      (event, session) => {
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+          loadSession();
+        } else if (event === "SIGNED_OUT") {
+          clearAuth();
+        }
       }
     );
 
-    return () => authListener.subscription.unsubscribe();
-  }, []);
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [clearAuth]);
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);

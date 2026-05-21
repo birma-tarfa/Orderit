@@ -18,7 +18,7 @@ async function getInventoryData() {
     .single();
 
   if (userError || !user || user.role !== "vendor") {
-    redirect("/main");
+    redirect("/marketplace");
   }
 
   // Fetch products with categories

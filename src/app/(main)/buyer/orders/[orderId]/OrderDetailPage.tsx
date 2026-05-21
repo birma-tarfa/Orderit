@@ -47,7 +47,7 @@ async function requireBuyerUser() {
     .single();
 
   if (error || !user || user.role !== "buyer") {
-    redirect("/main");
+    redirect("/marketplace");
   }
 
   return userId;

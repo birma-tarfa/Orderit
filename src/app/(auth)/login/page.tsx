@@ -24,6 +24,7 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       toast.success("Welcome back to FreshDrop!");
+      router.refresh();
       router.push("/marketplace");
     } catch (error: any) {
       toast.error(error.message ?? "Unable to sign in. Please try again.");
