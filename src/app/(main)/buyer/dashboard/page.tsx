@@ -44,8 +44,12 @@ async function requireBuyerUser() {
     .eq("id", userId)
     .single();
 
-  if (error || !user || user.role !== "buyer") {
-    redirect("/marketplace");
+  if (error || !user) {
+    redirect("/login");
+  }
+
+  if (user.role !== "buyer") {
+    redirect("/vendor/dashboard");
   }
 
   return { userId, user };

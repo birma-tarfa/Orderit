@@ -47,6 +47,8 @@ export function Navbar() {
   const currency = useCurrencyStore((state) => state.currency);
   const setCurrency = useCurrencyStore((state) => state.setCurrency);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
+  const isVendor = user?.role === "vendor";
+  const isBuyer = user?.role === "buyer";
 
   useEffect(() => {
     const savedCurrency = window.localStorage.getItem("currency");
@@ -277,24 +279,36 @@ export function Navbar() {
                   {user.full_name?.slice(0, 1) ?? "U"}
                 </button>
                 {profileOpen ? (
-                  <div className="absolute right-0 mt-3 w-52 rounded-3xl border border-slate-200 bg-white text-slate-700 shadow-lg" data-dropdown="profile">
+                  <div className="absolute right-0 mt-3 w-56 rounded-3xl border border-slate-200 bg-white text-slate-700 shadow-lg" data-dropdown="profile">
                     <Link href="/messages" className="block px-4 py-3 text-sm hover:bg-slate-100">
                       Messages
                     </Link>
-                    <Link href="/buyer/orders" className="block px-4 py-3 text-sm hover:bg-slate-100">
-                      My Orders
-                    </Link>
-                    <Link href="/buyer/profile" className="block px-4 py-3 text-sm hover:bg-slate-100">
-                      My Profile
-                    </Link>
-                    <Link href={user?.role === 'vendor' ? '/vendor/notifications' : '/buyer/notifications'} className="block px-4 py-3 text-sm hover:bg-slate-100">
+                    {isVendor ? (
+                      <>
+                        <Link href="/vendor/dashboard" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                          Vendor Dashboard
+                        </Link>
+                        <Link href="/vendor/products" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                          My Products
+                        </Link>
+                        <Link href="/vendor/orders" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                          My Orders
+                        </Link>
+                      </>
+                    ) : null}
+                    {isBuyer ? (
+                      <>
+                        <Link href="/buyer/orders" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                          My Orders
+                        </Link>
+                        <Link href="/buyer/profile" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                          My Profile
+                        </Link>
+                      </>
+                    ) : null}
+                    <Link href={isVendor ? "/vendor/notifications" : "/buyer/notifications"} className="block px-4 py-3 text-sm hover:bg-slate-100">
                       Notifications
                     </Link>
-                    {user.role === "vendor" ? (
-                      <Link href="/vendor/dashboard" className="block px-4 py-3 text-sm hover:bg-slate-100">
-                        Vendor Dashboard
-                      </Link>
-                    ) : null}
                     <button
                       type="button"
                       onClick={() => signOut()}
@@ -356,17 +370,32 @@ export function Navbar() {
                 <Link href="/messages" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                   Messages
                 </Link>
-                <Link href="/buyer/orders" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
-                  My Orders
-                </Link>
-                <Link href="/buyer/profile" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
-                  My Profile
-                </Link>
-                {user.role === "vendor" ? (
-                  <Link href="/vendor/dashboard" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
-                    Vendor Dashboard
-                  </Link>
+                {isVendor ? (
+                  <>
+                    <Link href="/vendor/dashboard" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                      Vendor Dashboard
+                    </Link>
+                    <Link href="/vendor/products" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                      My Products
+                    </Link>
+                    <Link href="/vendor/orders" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                      My Orders
+                    </Link>
+                  </>
                 ) : null}
+                {isBuyer ? (
+                  <>
+                    <Link href="/buyer/orders" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                      My Orders
+                    </Link>
+                    <Link href="/buyer/profile" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                      My Profile
+                    </Link>
+                  </>
+                ) : null}
+                <Link href={isVendor ? "/vendor/notifications" : "/buyer/notifications"} className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                  Notifications
+                </Link>
                 <button
                   type="button"
                   onClick={() => signOut()}

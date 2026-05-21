@@ -95,19 +95,35 @@ export default function RegisterPage() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex flex-wrap gap-3 rounded-full border border-slate-200 bg-slate-50 p-1 shadow-inner">
-                {(["buyer", "vendor"] as const).map((option) => (
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  {
+                    value: "buyer",
+                    title: "Buyer",
+                    description: "Browse and order products",
+                  },
+                  {
+                    value: "vendor",
+                    title: "Vendor",
+                    description: "Sell your products",
+                  },
+                ].map((option) => (
                   <button
-                    key={option}
+                    key={option.value}
                     type="button"
-                    onClick={() => setActiveRole(option)}
-                    className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-                      activeRole === option
-                        ? "bg-[#1a7a4a] text-white shadow"
-                        : "text-slate-700 hover:bg-slate-100"
+                    onClick={() => setActiveRole(option.value)}
+                    className={`rounded-3xl border p-4 text-left transition ${
+                      activeRole === option.value
+                        ? "border-emerald-600 bg-emerald-50 shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
-                    {option === "buyer" ? "I'm ordering food" : "I'm a food vendor"}
+                    <span className="block text-sm font-semibold text-slate-900">
+                      {option.title}
+                    </span>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {option.description}
+                    </p>
                   </button>
                 ))}
               </div>
