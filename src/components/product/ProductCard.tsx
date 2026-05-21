@@ -57,6 +57,14 @@ export function ProductCard({ product }: ProductCardProps) {
           showCount={true}
         />
 
+        <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+          <span className="rounded-full bg-slate-100 px-2 py-1">{product.preparation_time} mins</span>
+          <span className="rounded-full bg-slate-100 px-2 py-1">{product.spice_level}</span>
+          {product.dietary_tags.length > 0 && (
+            <span className="rounded-full bg-slate-100 px-2 py-1">{product.dietary_tags[0]}</span>
+          )}
+        </div>
+
         <p className="text-xl font-bold text-slate-900">
           {formatCurrency(product.price, currency.code, currency.locale)}
         </p>
@@ -67,7 +75,7 @@ export function ProductCard({ product }: ProductCardProps) {
           className={`w-full transition ${isAdding ? "bg-emerald-600" : ""}`}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
-          {isAdding ? "Added!" : isOutOfStock ? "Out of Stock" : "Add to Cart"}
+          {isAdding ? "Added!" : isOutOfStock ? "Out of Stock" : "Order Now"}
         </Button>
       </div>
     </article>

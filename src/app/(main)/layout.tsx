@@ -3,7 +3,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata = {
-  title: "OrderIt",
+  title: "FreshDrop",
 };
 
 export default function MainLayout({ children }: { children: ReactNode }) {

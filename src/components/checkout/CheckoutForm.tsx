@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { PaymentButtons } from "./PaymentButtons";
 import type { CartItem } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CheckoutFormProps {
   items: CartItem[];
@@ -14,19 +14,24 @@ interface CheckoutFormProps {
 }
 
 export function CheckoutForm({ items, onOrderCreated }: CheckoutFormProps) {
-  const router = useRouter();
+  const { user } = useAuth();
   const [fullName, setFullName] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
-  // Calculate totals
+  useEffect(() => {
+    if (user?.full_name) {
+      setFullName(user.full_name);
+    }
+  }, [user?.full_name]);
+
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
-  const deliveryFee = 1000; // NGN 1000
+  const deliveryFee = 1000;
   const total = subtotal + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,29 +40,50 @@ export function CheckoutForm({ items, onOrderCreated }: CheckoutFormProps) {
     setIsLoading(true);
 
     try {
+      if (!user?.email) {
+        throw new Error("Please sign in to complete checkout.");
+      }
+
       if (!fullName.trim() || !deliveryAddress.trim()) {
-        throw new Error("Please fill in all fields");
+        throw new Error("Please fill in all fields.");
       }
 
       if (items.length === 0) {
-        throw new Error("Cart is empty");
+        throw new Error("Cart is empty.");
       }
 
-      // TODO: Create order via API
-      // For now, we'll simulate order creation
-      const mockOrderId = `order_${Date.now()}`;
-      setOrderId(mockOrderId);
-      onOrderCreated?.(mockOrderId);
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          })),
+          deliveryAddress,
+          customerName: fullName,
+          email: user.email,
+          customerPhone: user.phone,
+        }),
+      });
 
-      // Order creation logic would go here
-      // After creating order, the PaymentButtons component will use the orderId
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to create order.");
+      }
+
+      setOrderId(data.orderId);
+      onOrderCreated?.(data.orderId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : "An error occurred.");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Show payment options after form submission
   if (orderId) {
     return (
       <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -86,9 +112,10 @@ export function CheckoutForm({ items, onOrderCreated }: CheckoutFormProps) {
 
         <PaymentButtons
           orderId={orderId}
-          email="buyer@example.com" // TODO: Get from auth context
+          email={user?.email ?? ""}
           amount={total}
           customerName={fullName}
+          customerPhone={user?.phone}
         />
 
         <Button
@@ -111,6 +138,12 @@ export function CheckoutForm({ items, onOrderCreated }: CheckoutFormProps) {
       {error && (
         <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
           {error}
+        </div>
+      )}
+
+      {!user?.email && (
+        <div className="rounded-lg bg-yellow-50 p-4 text-sm text-yellow-800">
+          You must be signed in to place an order.
         </div>
       )}
 
@@ -158,7 +191,7 @@ export function CheckoutForm({ items, onOrderCreated }: CheckoutFormProps) {
 
       <Button
         type="submit"
-        disabled={isLoading || items.length === 0}
+        disabled={isLoading || items.length === 0 || !user?.email}
         className="w-full"
       >
         {isLoading ? <Spinner /> : "Proceed to Payment"}

@@ -27,11 +27,11 @@ export async function generateMetadata({ params }: { params: { vendorId: string 
     }
 
     return {
-      title: `${vendor.shop_name} | OrderIt`,
-      description: vendor.shop_description || `Shop at ${vendor.shop_name} on OrderIt`,
+      title: `${vendor.shop_name} | FreshDrop`,
+      description: vendor.shop_description || `Shop at ${vendor.shop_name} on FreshDrop`,
       openGraph: {
         title: vendor.shop_name,
-        description: vendor.shop_description || `Browse products from ${vendor.shop_name}`,
+        description: vendor.shop_description || `Browse menu items from ${vendor.shop_name}`,
         images: vendor.banner_url ? [vendor.banner_url] : vendor.logo_url ? [vendor.logo_url] : [],
         type: 'website',
       },

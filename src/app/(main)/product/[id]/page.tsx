@@ -233,6 +233,24 @@ export default function ProductDetailPage() {
                 </span>
               )}
             </div>
+            <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+              <span className="rounded-full bg-slate-100 px-3 py-1">Prep {product.preparation_time} mins</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1">{product.spice_level}</span>
+              {product.is_available_today ? (
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Available today</span>
+              ) : (
+                <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700">Not available today</span>
+              )}
+            </div>
+            {product.dietary_tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                {product.dietary_tags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Stock Status */}
@@ -283,7 +301,7 @@ export default function ProductDetailPage() {
               <div className="space-y-2">
                 <Button className="w-full" onClick={handleAddToCart}>
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  Add to Cart
+                  Order Now
                 </Button>
                 <Button variant="outline" className="w-full">
                   Buy Now
@@ -393,7 +411,7 @@ export default function ProductDetailPage() {
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <Link href={`/vendor/${product.vendor.id}`}>
                   <Button variant="outline" className="w-full">
-                    Visit Store
+                    View Menu
                   </Button>
                 </Link>
               </div>

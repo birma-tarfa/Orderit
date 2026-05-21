@@ -38,7 +38,7 @@ export function StorefrontHeader({ vendor }: StorefrontHeaderProps) {
         )}
         {vendor.is_verified && (
           <Badge className="absolute right-6 top-6 bg-blue-100 text-blue-800">
-            Verified Seller
+            Open Now
           </Badge>
         )}
       </div>
@@ -91,7 +91,11 @@ export function StorefrontHeader({ vendor }: StorefrontHeaderProps) {
 
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4" />
-                <span>{vendor.total_products} products</span>
+                <span>{vendor.total_products} menu items</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Delivery estimate 30-45 mins</span>
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-This is the OrderIt project, a global multi-vendor marketplace built with [Next.js](https://nextjs.org).
+This is the FreshDrop project, a food-focused marketplace built with [Next.js](https://nextjs.org).
 
 ## Getting Started
 

@@ -20,6 +20,11 @@ const productSchema = z.object({
     }
     return Number(value);
   }, z.number().positive("Compare price must be greater than 0").nullable()),
+  preparation_time: z.number().int().positive("Preparation time must be a positive number"),
+  minimum_order: z.number().int().positive("Minimum order must be at least 1"),
+  is_available_today: z.boolean(),
+  dietary_tags: z.string().optional(),
+  spice_level: z.enum(["Mild", "Medium", "Spicy", "Extra Spicy"]),
   stock_quantity: z.number().int().nonnegative("Stock cannot be negative"),
   sku: z.string().optional(),
   is_active: z.boolean(),
@@ -54,6 +59,11 @@ export function VendorProductForm({ product, categories, mode }: VendorProductFo
     category_id: product?.category_id ?? "",
     price: product?.price ?? 0,
     compare_price: product?.compare_price ?? null,
+    preparation_time: product?.preparation_time ?? 20,
+    minimum_order: product?.minimum_order ?? 1,
+    is_available_today: product?.is_available_today ?? true,
+    dietary_tags: product?.dietary_tags?.join(", ") ?? "",
+    spice_level: product?.spice_level ?? "Medium",
     stock_quantity: product?.stock_quantity ?? 0,
     sku: product?.sku ?? "",
     is_active: product?.is_active ?? true,
@@ -116,7 +126,13 @@ export function VendorProductForm({ product, categories, mode }: VendorProductFo
         category_id: values.category_id,
         price: Number(values.price),
         compare_price: values.compare_price ? Number(values.compare_price) : null,
-        stock_quantity: Number(values.stock_quantity),
+      preparation_time: Number(values.preparation_time),
+      minimum_order: Number(values.minimum_order),
+      is_available_today: values.is_available_today,
+      dietary_tags: values.dietary_tags
+        ? values.dietary_tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        : [],
+      spice_level: values.spice_level,
         sku: values.sku || null,
         is_active: values.is_active,
         images: imageUrls,
@@ -188,11 +204,11 @@ export function VendorProductForm({ product, categories, mode }: VendorProductFo
     <div className="space-y-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">{mode === "new" ? "Add Product" : "Edit Product"}</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">{mode === "new" ? "Add Dish" : "Edit Dish"}</h1>
           <p className="mt-2 text-sm text-slate-600">
             {mode === "new"
-              ? "Create a new product listing for your store."
-              : "Update your product details and inventory."}
+              ? "Create a new menu item for your kitchen."
+              : "Update your dish details and availability."}
           </p>
         </div>
         <label className="inline-flex cursor-pointer items-center rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-200">
@@ -251,7 +267,7 @@ export function VendorProductForm({ product, categories, mode }: VendorProductFo
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-4">
           <div className="space-y-4">
             <label className="block text-sm font-medium text-slate-700">Price (₦)</label>
             <input
@@ -275,13 +291,59 @@ export function VendorProductForm({ product, categories, mode }: VendorProductFo
           </div>
 
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-slate-700">Stock Quantity</label>
+            <label className="block text-sm font-medium text-slate-700">Preparation Time (mins)</label>
             <input
               type="number"
-              {...register("stock_quantity", { valueAsNumber: true })}
+              {...register("preparation_time", { valueAsNumber: true })}
               className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
             />
-            {errors.stock_quantity && <p className="text-sm text-rose-600">{errors.stock_quantity.message}</p>}
+            {errors.preparation_time && <p className="text-sm text-rose-600">{errors.preparation_time.message}</p>}
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-slate-700">Minimum Order</label>
+            <input
+              type="number"
+              {...register("minimum_order", { valueAsNumber: true })}
+              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            />
+            {errors.minimum_order && <p className="text-sm text-rose-600">{errors.minimum_order.message}</p>}
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
+              <input
+                type="checkbox"
+                {...register("is_available_today")}
+                className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              />
+              Available today
+            </label>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-slate-700">Spice Level</label>
+            <select
+              {...register("spice_level")}
+              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="Mild">Mild</option>
+              <option value="Medium">Medium</option>
+              <option value="Spicy">Spicy</option>
+              <option value="Extra Spicy">Extra Spicy</option>
+            </select>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-slate-700">Dietary Tags</label>
+            <input
+              type="text"
+              {...register("dietary_tags")}
+              placeholder="E.g. Vegan, Halal, Gluten-free"
+              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            />
           </div>
         </div>
 

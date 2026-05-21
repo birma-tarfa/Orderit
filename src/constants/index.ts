@@ -60,14 +60,14 @@ export const GLOBAL_LOCATIONS = [
 export const LOCATIONS = NIGERIAN_STATES;
 
 export const PRODUCT_CATEGORIES = [
-  "Electronics",
-  "Fashion",
-  "Food & Drinks",
-  "Beauty",
-  "Home & Kitchen",
-  "Agriculture",
-  "Services",
-  "Others",
+  "Nigerian Classics",
+  "Fast Food",
+  "Soups & Stews",
+  "Rice & Swallow",
+  "Seafood",
+  "Vegetarian",
+  "Desserts",
+  "Drinks",
 ];
 
 export type CurrencyOption = {

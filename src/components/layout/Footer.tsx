@@ -3,7 +3,7 @@ import Link from "next/link";
 const footerLinks = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
-  { label: "Sell on OrderIt", href: "/sell" },
+  { label: "Start Selling on FreshDrop", href: "/sell" },
   { label: "Help Center", href: "/help" },
 ];
 
@@ -13,14 +13,14 @@ export function Footer() {
       <div className="mx-auto max-w-7xl space-y-12 px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr_1fr]">
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-white">OrderIt</h2>
+            <h2 className="text-2xl font-semibold text-white">FreshDrop</h2>
             <p className="max-w-lg text-sm text-slate-400">
-              Global multi-vendor marketplace for authentic products, trusted vendors, and secure payments.
+              Order fresh food from verified local Nigerian kitchens with secure payments and fast delivery.
             </p>
             <div className="flex flex-wrap gap-3 text-sm text-slate-300">
               <Link href="/about" className="hover:text-white">About</Link>
               <Link href="/contact" className="hover:text-white">Contact</Link>
-              <Link href="/sell" className="hover:text-white">Sell on OrderIt</Link>
+              <Link href="/sell" className="hover:text-white">Start Selling on FreshDrop</Link>
               <Link href="/help" className="hover:text-white">Help Center</Link>
             </div>
           </div>
@@ -47,7 +47,7 @@ export function Footer() {
 
         <div className="flex flex-col gap-3 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-400">Made with <span className="text-emerald-400">❤️</span> for sellers and buyers worldwide</p>
-          <p className="text-sm text-slate-500">© {new Date().getFullYear()} OrderIt. All rights reserved.</p>
+          <p className="text-sm text-slate-500">© {new Date().getFullYear()} FreshDrop. All rights reserved.</p>
         </div>
       </div>
     </footer>

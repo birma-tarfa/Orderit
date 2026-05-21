@@ -67,10 +67,10 @@ export default async function MarketplacePage() {
         <div className="mx-auto max-w-4xl space-y-8">
           <div className="space-y-4 text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-              Shop From Verified Nigerian Vendors
+              Order Fresh Food From Local Nigerian Kitchens
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-emerald-100 sm:text-xl">
-              Discover authentic products from trusted vendors across Nigeria.
+              Hot meals, snacks, and drinks delivered to your door from verified food vendors.
             </p>
           </div>
           <div className="mx-auto max-w-2xl space-y-6">
@@ -79,12 +79,12 @@ export default async function MarketplacePage() {
               <input
                 className="flex-1 bg-transparent text-white placeholder:text-emerald-200 focus:outline-none"
                 type="search"
-                placeholder="Search products, vendors..."
+                placeholder="Search meals, restaurants, cuisines..."
               />
               <Button className="bg-emerald-600 hover:bg-emerald-700">Search</Button>
             </div>
             <div className="flex flex-wrap justify-center gap-3">
-              {["Electronics", "Fashion", "Food & Drinks", "Beauty", "Home & Kitchen"].map((category) => (
+              {["Rice & Swallow", "Grills & BBQ", "Soups & Stews", "Snacks & Small Chops", "Drinks"].map((category) => (
                 <Link
                   key={category}
                   href={`/marketplace/search?category=${encodeURIComponent(category)}`}
@@ -96,7 +96,7 @@ export default async function MarketplacePage() {
             </div>
             <div className="text-center">
               <Link href="/register">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">Start Selling</Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700">Start Cooking</Button>
               </Link>
             </div>
           </div>

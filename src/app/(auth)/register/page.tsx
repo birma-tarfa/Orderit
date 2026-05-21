@@ -109,13 +109,13 @@ export default function RegisterPage() {
           <div className="space-y-6">
             <div>
               <p className="inline-flex rounded-full bg-emerald-100 px-4 py-1 text-sm font-semibold uppercase tracking-[0.3em] text-emerald-900">
-                OrderIt
+                FreshDrop
               </p>
               <h1 className="mt-6 text-4xl font-semibold text-slate-900 sm:text-5xl">
                 Create your account
               </h1>
               <p className="mt-4 max-w-xl text-sm text-slate-600 sm:text-base">
-                Join thousands of Nigerian buyers and vendors on Orderit.
+                Join thousands of Nigerian food lovers and food vendors on FreshDrop.
               </p>
             </div>
 
@@ -161,19 +161,19 @@ export default function RegisterPage() {
                   {activeRole === "vendor" && (
                     <>
                       <label className="space-y-2 text-sm font-medium text-slate-700">
-                        Shop name
-                        <Input type="text" {...register("shop_name")} placeholder="My Online Shop" />
+                        Kitchen Name
+                        <Input type="text" {...register("shop_name")} placeholder="My Kitchen" />
                         {errors.shop_name && <p className="text-sm text-red-600">{errors.shop_name.message}</p>}
                       </label>
 
                       <label className="space-y-2 text-sm font-medium text-slate-700">
-                        Shop description
-                        <Input type="text" {...register("shop_description")} placeholder="What you sell and why customers love you" />
+                        What you cook and deliver
+                        <Input type="text" {...register("shop_description")} placeholder="E.g., Nigerian cuisine, snacks, breakfast" />
                         {errors.shop_description && <p className="text-sm text-red-600">{errors.shop_description.message}</p>}
                       </label>
 
                       <label className="space-y-2 text-sm font-medium text-slate-700">
-                        State / location
+                        Location
                         <Input type="text" {...register("location")} placeholder="Lagos" />
                         {errors.location && <p className="text-sm text-red-600">{errors.location.message}</p>}
                       </label>
@@ -211,16 +211,16 @@ export default function RegisterPage() {
           <div className="rounded-[2rem] bg-gradient-to-br from-emerald-900 via-slate-900 to-[#0f4f36] p-8 text-white shadow-xl sm:p-12">
             <div className="space-y-6">
               <div className="rounded-3xl bg-white/10 p-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">OrderIt</p>
-                <h2 className="mt-4 text-3xl font-semibold">Buy and sell across Nigeria.</h2>
+                <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">FreshDrop</p>
+                <h2 className="mt-4 text-3xl font-semibold">Order and sell fresh Nigerian food.</h2>
               </div>
               <ul className="space-y-4 text-sm leading-7 text-emerald-100">
-                <li>• Fast onboarding for buyers and vendors.</li>
+                <li>• Fast onboarding for food lovers and vendors.</li>
                 <li>• Pay with Paystack or Flutterwave.</li>
-                <li>• Modern vendor dashboard with full order tracking.</li>
+                <li>• Real-time order tracking and delivery updates.</li>
               </ul>
               <p className="rounded-3xl bg-white/10 p-5 text-sm text-slate-200">
-                Join thousands of Nigerians already buying and selling on Orderit.
+                Join thousands of Nigerians already ordering fresh meals and cooking from their kitchens on FreshDrop.
               </p>
             </div>
           </div>

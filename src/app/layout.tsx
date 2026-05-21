@@ -13,8 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orderit - Nigerian Multi-Vendor Marketplace",
-  description: "Shop from verified Nigerian vendors",
+  title: "FreshDrop - Order Fresh Food From Local Nigerian Kitchens",
+  description: "Order fresh meals, snacks, and drinks from verified local food vendors",
 };
 
 export default function RootLayout({

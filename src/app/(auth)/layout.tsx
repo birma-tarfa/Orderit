@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "OrderIt Authentication",
+  title: "FreshDrop - Sign In or Register",
 };
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
