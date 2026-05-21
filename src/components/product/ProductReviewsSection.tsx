@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useProductReviews } from '@/hooks/useReviews';
-import { supabaseBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { ReviewForm } from './ReviewForm';
 import { RatingsDisplay, ReviewsList } from './ReviewsDisplay';
 
@@ -52,7 +52,7 @@ export function ProductReviewsSection({
       try {
         const response = await fetch(`/api/reviews?productId=${productId}`, {
           headers: {
-            'Authorization': `Bearer ${(await supabaseBrowserClient.auth.getSession()).data.session?.access_token}`,
+            'Authorization': `Bearer ${(await createClient().auth.getSession()).data.session?.access_token}`,
           },
         });
 

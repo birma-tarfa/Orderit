@@ -1,4 +1,4 @@
-import { supabaseBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 function formatTimeAgo(date: string) {
   const now = new Date();
@@ -56,7 +56,7 @@ export default function BuyerNotificationsPage() {
 
       const response = await fetch(`/api/notifications?${params}`, {
         headers: {
-          'Authorization': `Bearer ${(await supabaseBrowserClient.auth.getSession()).then(s => s.data.session?.access_token)}`,
+          'Authorization': `Bearer ${(await createClient().auth.getSession()).then(s => s.data.session?.access_token)}`,
         },
       });
 

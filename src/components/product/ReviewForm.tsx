@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Star, AlertCircle } from 'lucide-react';
-import { supabaseBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 interface ReviewFormProps {
   productId: string;
@@ -43,7 +43,7 @@ export function ReviewForm({
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabaseBrowserClient.auth.getSession();
+      const { data: { session } } = await createClient().auth.getSession();
       if (!session?.access_token) {
         throw new Error('You must be logged in to submit a review');
       }

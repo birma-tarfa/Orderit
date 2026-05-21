@@ -10,7 +10,7 @@ export function InventoryTable() {
           <p className="mt-2 text-sm text-slate-600">Quick view of your stock levels.</p>
         </div>
         <Link
-          href="/main/vendor/inventory"
+          href="/vendor/inventory"
           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
         >
           View All →

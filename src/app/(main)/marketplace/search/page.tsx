@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductCardSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/Button";
@@ -38,7 +38,7 @@ const ITEMS_PER_PAGE = 12;
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const supabase = supabaseBrowserClient;
+  const supabase = createClient();
 
   const [filters, setFilters] = useState<SearchFilters>({
     q: searchParams.get('q') || '',

@@ -8,7 +8,7 @@ import { Star, ShoppingCart, MessageSquare, Heart, Share2, ChevronLeft, ChevronR
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { supabaseBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, getCurrencyOption } from '@/constants';
 import { useCurrencyStore } from '@/store/currencyStore';
 import { useCartStore } from '@/store/cartStore';
@@ -32,7 +32,7 @@ interface ProductWithVendor extends Product {
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
-  const supabase = supabaseBrowserClient;
+  const supabase = createClient();
 
   const [product, setProduct] = useState<ProductWithVendor | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductWithVendor[]>([]);

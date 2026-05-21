@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import type { AuthProfile, User, VendorProfile } from "@/types";
 
@@ -11,7 +11,7 @@ export function useAuth() {
 
   const loadSession = async () => {
     setIsLoading(true);
-    const { data, error } = await supabaseBrowserClient.auth.getSession();
+    const { data, error } = await createClient().auth.getSession();
 
     if (error) {
       clearAuth();
@@ -26,7 +26,7 @@ export function useAuth() {
       return;
     }
 
-    const { data: userData, error: userError } = await supabaseBrowserClient
+    const { data: userData, error: userError } = await createClient()
       .from<User>("users")
       .select("*")
       .eq("id", sessionUser.id)
@@ -41,7 +41,7 @@ export function useAuth() {
     setUser(userData);
 
     if (userData.role === "vendor") {
-      const { data: vendorProfile, error: vendorError } = await supabaseBrowserClient
+      const { data: vendorProfile, error: vendorError } = await createClient()
         .from<VendorProfile>("vendor_profiles")
         .select("*")
         .eq("user_id", sessionUser.id)
@@ -62,7 +62,7 @@ export function useAuth() {
   useEffect(() => {
     loadSession();
 
-    const { data: authListener } = supabaseBrowserClient.auth.onAuthStateChange(
+    const { data: authListener } = createClient().auth.onAuthStateChange(
       () => {
         loadSession();
       }
@@ -73,7 +73,7 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    const { data, error } = await supabaseBrowserClient.auth.signInWithPassword({
+    const { data, error } = await createClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -100,7 +100,7 @@ export function useAuth() {
     }
   ) => {
     setIsLoading(true);
-    const { data, error } = await supabaseBrowserClient.auth.signUp({
+    const { data, error } = await createClient().auth.signUp({
       email,
       password,
     });
@@ -116,7 +116,7 @@ export function useAuth() {
       return data;
     }
 
-    const { error: createUserError } = await supabaseBrowserClient.from("users").insert({
+    const { error: createUserError } = await createClient().from("users").insert({
       id: userId,
       email,
       full_name: name,
@@ -130,7 +130,7 @@ export function useAuth() {
     }
 
     if (role === "vendor" && vendorData?.shopName) {
-      const { error: profileError } = await supabaseBrowserClient.from("vendor_profiles").insert({
+      const { error: profileError } = await createClient().from("vendor_profiles").insert({
         user_id: userId,
         shop_name: vendorData.shopName,
         shop_description: vendorData.shopDescription,
@@ -150,14 +150,14 @@ export function useAuth() {
 
   const signOut = async () => {
     setIsLoading(true);
-    await supabaseBrowserClient.auth.signOut();
+    await createClient().auth.signOut();
     clearAuth();
     setIsLoading(false);
   };
 
   const resetPassword = async (email: string) => {
     setIsLoading(true);
-    const { data, error } = await supabaseBrowserClient.auth.resetPasswordForEmail(email, {
+    const { data, error } = await createClient().auth.resetPasswordForEmail(email, {
       redirectTo: process.env.NEXTAUTH_URL ?? undefined,
     });
     setIsLoading(false);

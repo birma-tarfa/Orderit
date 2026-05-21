@@ -27,7 +27,7 @@ export async function notifyVendorNewOrder(vendorId: string, orderId: string, bu
     title: 'New Order Received',
     body: `${buyerName} placed a new order with you.`,
     type: 'order',
-    link: `/main/vendor/orders/${orderId}`,
+    link: `/vendor/orders/${orderId}`,
   });
 }
 
@@ -51,7 +51,7 @@ export async function notifyBuyerOrderStatusChange(
     title: 'Order Status Updated',
     body: `${vendorName} has ${statusMessages[status]}.`,
     type: 'order',
-    link: `/main/orders/${orderId}`,
+    link: `/orders/${orderId}`,
   });
 }
 
@@ -69,7 +69,7 @@ export async function notifyNewMessage(
     title: 'New Message',
     body: `You have a new message from ${senderName}${isOrderRelated ? ' about your order' : ''}.`,
     type: 'message',
-    link: `/main/messages?conversation=${conversationId}`,
+    link: `/messages?conversation=${conversationId}`,
   });
 }
 
@@ -87,7 +87,7 @@ export async function notifyVendorNewReview(
     title: 'New Review Received',
     body: `${reviewerName} left a review on your product "${productName}".`,
     type: 'review',
-    link: `/main/vendor/products/${productId}`,
+    link: `/vendor/products/${productId}`,
   });
 }
 
@@ -105,7 +105,7 @@ export async function notifyBuyerOrderCancelled(
     title: 'Order Cancelled',
     body: `${vendorName} cancelled your order${reason ? `: ${reason}` : ''}.`,
     type: 'order',
-    link: `/main/orders/${orderId}`,
+    link: `/orders/${orderId}`,
   });
 }
 
@@ -123,6 +123,6 @@ export async function notifyVendorOrderCancelled(
     title: 'Order Cancelled',
     body: `${buyerName} cancelled their order${reason ? `: ${reason}` : ''}.`,
     type: 'order',
-    link: `/main/vendor/orders/${orderId}`,
+    link: `/vendor/orders/${orderId}`,
   });
 }

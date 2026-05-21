@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { supabaseBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import type { Review } from '@/types';
 
 export interface ReviewWithBuyer extends Review {
@@ -67,7 +67,7 @@ export function useProductReviews(productId?: string) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabaseBrowserClient.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${(await createClient().auth.getSession()).data.session?.access_token}`,
         },
         body: JSON.stringify({ productId, rating, comment }),
       });

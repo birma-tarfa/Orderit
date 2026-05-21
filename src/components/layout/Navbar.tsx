@@ -109,7 +109,7 @@ export function Navbar() {
           <Link href="/marketplace" className="hover:text-slate-900">
             Marketplace
           </Link>
-          <Link href="/main/vendor" className="hover:text-slate-900">
+          <Link href="/vendor" className="hover:text-slate-900">
             Vendors
           </Link>
           <div className="relative">
@@ -256,7 +256,7 @@ export function Navbar() {
                     </div>
                     <div className="border-t border-slate-200 p-3">
                       <Link
-                        href={user?.role === 'vendor' ? '/main/vendor/notifications' : '/main/buyer/notifications'}
+                        href={user?.role === 'vendor' ? '/vendor/notifications' : '/buyer/notifications'}
                         className="block w-full rounded-2xl bg-slate-100 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-200"
                         onClick={() => setNotificationsOpen(false)}
                       >
@@ -278,16 +278,16 @@ export function Navbar() {
                 </button>
                 {profileOpen ? (
                   <div className="absolute right-0 mt-3 w-52 rounded-3xl border border-slate-200 bg-white text-slate-700 shadow-lg" data-dropdown="profile">
-                    <Link href="/main/messages" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                    <Link href="/messages" className="block px-4 py-3 text-sm hover:bg-slate-100">
                       Messages
                     </Link>
-                    <Link href="/main/orders" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                    <Link href="/buyer/orders" className="block px-4 py-3 text-sm hover:bg-slate-100">
                       My Orders
                     </Link>
-                    <Link href="/main/profile" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                    <Link href="/buyer/profile" className="block px-4 py-3 text-sm hover:bg-slate-100">
                       My Profile
                     </Link>
-                    <Link href={user?.role === 'vendor' ? '/main/vendor/notifications' : '/main/buyer/notifications'} className="block px-4 py-3 text-sm hover:bg-slate-100">
+                    <Link href={user?.role === 'vendor' ? '/vendor/notifications' : '/buyer/notifications'} className="block px-4 py-3 text-sm hover:bg-slate-100">
                       Notifications
                     </Link>
                     {user.role === "vendor" ? (
@@ -325,7 +325,7 @@ export function Navbar() {
             <Link href="/marketplace" className="block rounded-3xl px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100">
               Marketplace
             </Link>
-            <Link href="/main/vendor" className="block rounded-3xl px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100">
+            <Link href="/vendor" className="block rounded-3xl px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-100">
               Vendors
             </Link>
             <details className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
@@ -353,13 +353,13 @@ export function Navbar() {
             </details>
             {user ? (
               <div className="space-y-2 rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                <Link href="/main/messages" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                <Link href="/messages" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                   Messages
                 </Link>
-                <Link href="/main/orders" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                <Link href="/buyer/orders" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                   My Orders
                 </Link>
-                <Link href="/main/profile" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                <Link href="/buyer/profile" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                   My Profile
                 </Link>
                 {user.role === "vendor" ? (

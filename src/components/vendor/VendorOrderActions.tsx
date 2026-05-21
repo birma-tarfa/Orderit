@@ -79,7 +79,7 @@ export function VendorOrderActions({ orderId, status, buyerId }: VendorOrderActi
           <X className="mr-2 h-4 w-4" /> Cancel Order
         </Button>
         <Button
-          onClick={() => router.push(`/main/messages?buyerId=${buyerId}`)}
+          onClick={() => router.push(`/messages?buyerId=${buyerId}`)}
           className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
         >
           <MessageCircle className="mr-2 h-4 w-4" /> Message Buyer

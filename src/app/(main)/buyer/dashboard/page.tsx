@@ -138,7 +138,7 @@ export default async function BuyerDashboard() {
           Track your orders, manage your profile, and continue shopping.
         </p>
         <div className="mt-6">
-          <Link href="/main/marketplace">
+          <Link href="/marketplace">
             <Button className="bg-blue-600 hover:bg-blue-700">
               <ShoppingBag className="w-4 h-4 mr-2" />
               Continue Shopping
@@ -178,7 +178,7 @@ export default async function BuyerDashboard() {
             <h2 className="text-xl font-semibold text-slate-900">Recent Orders</h2>
             <p className="mt-1 text-sm text-slate-600">Your latest order activity</p>
           </div>
-          <Link href="/main/buyer/orders">
+          <Link href="/buyer/orders">
             <Button variant="outline">View All Orders</Button>
           </Link>
         </div>
@@ -188,7 +188,7 @@ export default async function BuyerDashboard() {
             <ShoppingBag className="w-12 h-12 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">No orders yet</h3>
             <p className="text-slate-600 mb-4">Start shopping to see your orders here.</p>
-            <Link href="/main/marketplace">
+            <Link href="/marketplace">
               <Button>Browse Products</Button>
             </Link>
           </div>

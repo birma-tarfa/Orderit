@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from "react";
-import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import type { ConversationPreview, Message, MessageWithRelations } from "@/types";
 
 export function useConversations(currentUserId?: string) {
@@ -21,7 +21,7 @@ export function useConversations(currentUserId?: string) {
     try {
       const response = await fetch("/api/messages/conversations", {
         headers: {
-          'Authorization': `Bearer ${(await supabaseBrowserClient.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${(await createClient().auth.getSession()).data.session?.access_token}`,
         },
       });
       if (!response.ok) {
@@ -46,7 +46,7 @@ export function useConversations(currentUserId?: string) {
     fetchConversations();
 
     // Subscribe to new messages to refresh conversations
-    const channel = supabaseBrowserClient.channel(`conversations-${currentUserId}`);
+    const channel = createClient().channel(`conversations-${currentUserId}`);
 
     channel
       .on(
@@ -76,11 +76,11 @@ export function useConversations(currentUserId?: string) {
         }
       );
 
-    supabaseBrowserClient.addChannel(channel);
+    createClient().addChannel(channel);
     channel.subscribe();
 
     return () => {
-      supabaseBrowserClient.removeChannel(channel);
+      createClient().removeChannel(channel);
     };
   }, [currentUserId, fetchConversations]);
 
@@ -106,7 +106,7 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabaseBrowserClient
+    const { data, error } = await createClient()
       .from('messages')
       .select(
         `*, sender:sender_id(id,full_name,avatar_url,role), receiver:receiver_id(id,full_name,avatar_url,role), order:order_id(id)`
@@ -137,7 +137,7 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabaseBrowserClient.auth.getSession()).data.session?.access_token}`,
+            'Authorization': `Bearer ${(await createClient().auth.getSession()).data.session?.access_token}`,
           },
           body: JSON.stringify({ messageIds }),
         });
@@ -158,7 +158,7 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
         throw new Error('Not authenticated or no conversation selected');
       }
 
-      const { data, error } = await supabaseBrowserClient
+      const { data, error } = await createClient()
         .from('messages')
         .insert([
           {
@@ -192,7 +192,7 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
       return;
     }
 
-    const channel = supabaseBrowserClient.channel(`conversation-${currentUserId}-${conversationId}`);
+    const channel = createClient().channel(`conversation-${currentUserId}-${conversationId}`);
 
     channel
       .on(
@@ -232,11 +232,11 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
         }
       );
 
-    supabaseBrowserClient.addChannel(channel);
+    createClient().addChannel(channel);
     channel.subscribe();
 
     return () => {
-      supabaseBrowserClient.removeChannel(channel);
+      createClient().removeChannel(channel);
     };
   }, [conversationId, currentUserId]);
 
@@ -273,7 +273,7 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
     refresh: fetchMessages,
   };
 }
-      supabaseBrowserClient.removeChannel(channel);
+      createClient().removeChannel(channel);
     };
   }, [conversationId, currentUserId]);
 
