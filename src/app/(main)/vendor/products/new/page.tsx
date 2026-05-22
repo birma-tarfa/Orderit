@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import type { Category } from "@/types";
 
 interface ProductFormValues {
@@ -15,7 +16,6 @@ interface ProductFormValues {
   stock_quantity: string;
   sku: string;
   is_active: boolean;
-  image_urls: string[];
   preparation_time: string;
   spice_level: "mild" | "medium" | "hot" | "extra_hot";
   dietary_tags: {
@@ -39,8 +39,9 @@ export default function NewVendorProductPage() {
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
-  const { register, handleSubmit, watch, setValue } = useForm<ProductFormValues>({
+  const { register, handleSubmit, watch } = useForm<ProductFormValues>({
     defaultValues: {
       name: "",
       description: "",
@@ -50,7 +51,6 @@ export default function NewVendorProductPage() {
       stock_quantity: "0",
       sku: "",
       is_active: true,
-      image_urls: ["", "", ""],
       preparation_time: "20",
       spice_level: "medium",
       dietary_tags: {
@@ -62,7 +62,6 @@ export default function NewVendorProductPage() {
     },
   });
 
-  const imageUrls = watch("image_urls");
   const dietaryTags = watch("dietary_tags");
 
   useEffect(() => {
@@ -131,10 +130,20 @@ export default function NewVendorProductPage() {
         return;
       }
 
-      const imageList = values.image_urls.filter(Boolean).slice(0, 3);
+      const { data: vendorProfile, error: profileError } = await supabase
+        .from("vendor_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profileError || !vendorProfile) {
+        throw new Error("Unable to determine vendor profile. Please try again.");
+      }
+
+      const imageList = imageUrls.slice(0, 5);
 
       const { error } = await supabase.from("products").insert({
-        vendor_id: user.id,
+        vendor_id: vendorProfile.id,
         name: values.name,
         description: values.description || null,
         category_id: values.category_id || null,
@@ -296,18 +305,11 @@ export default function NewVendorProductPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700">Image URLs (up to 3)</label>
-              <div className="space-y-3">
-                {[0, 1, 2].map((index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    {...register(`image_urls.${index}` as const)}
-                    placeholder={`Image URL ${index + 1}`}
-                    className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[#1a7a4a] focus:outline-none focus:ring-2 focus:ring-[#1a7a4a]/20"
-                  />
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-slate-700">Product Images</label>
+              <ImageUpload
+                value={imageUrls}
+                onChange={(urls) => setImageUrls(urls)}
+              />
             </div>
 
             <div className="space-y-3">
@@ -344,9 +346,6 @@ export default function NewVendorProductPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
             <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex items-center justify-center rounded-full bg-[#1a7a4a] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#166033] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {submitting ? "Creating..." : "Create Product"}
             </button>

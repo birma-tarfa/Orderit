@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import type { Category } from "@/types";
 
 interface ProductFormValues {
@@ -15,7 +16,6 @@ interface ProductFormValues {
   stock_quantity: string;
   sku: string;
   is_active: boolean;
-  image_urls: string[];
   preparation_time: string;
   spice_level: "mild" | "medium" | "hot" | "extra_hot";
   dietary_tags: {
@@ -41,6 +41,7 @@ export default function EditVendorProductPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const { register, handleSubmit, reset, watch } = useForm<ProductFormValues>({
     defaultValues: {
@@ -52,7 +53,6 @@ export default function EditVendorProductPage() {
       stock_quantity: "0",
       sku: "",
       is_active: true,
-      image_urls: ["", "", ""],
       preparation_time: "20",
       spice_level: "medium",
       dietary_tags: {
@@ -63,8 +63,6 @@ export default function EditVendorProductPage() {
       },
     },
   });
-
-  const imageUrls = watch("image_urls");
 
   useEffect(() => {
     const loadData = async () => {
@@ -129,15 +127,11 @@ export default function EditVendorProductPage() {
         stock_quantity: product.stock_quantity?.toString() ?? "0",
         sku: product.sku || "",
         is_active: product.is_active ?? true,
-        image_urls: [
-          product.images?.[0] || "",
-          product.images?.[1] || "",
-          product.images?.[2] || "",
-        ],
         preparation_time: product.preparation_time?.toString() ?? "20",
         spice_level: spiceOptions.find((option) => option.label === product.spice_level)?.value ?? "medium",
         dietary_tags,
       });
+      setImageUrls(product.images || []);
 
       setCategories(categoryData || []);
       setLoading(false);
@@ -170,7 +164,7 @@ export default function EditVendorProductPage() {
           }
         });
 
-      const imageList = values.image_urls.filter(Boolean).slice(0, 3);
+      const imageList = imageUrls.slice(0, 5);
 
       const { error } = await supabase.from("products").update({
         name: values.name,
@@ -334,18 +328,11 @@ export default function EditVendorProductPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700">Image URLs (up to 3)</label>
-              <div className="space-y-3">
-                {[0, 1, 2].map((index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    {...register(`image_urls.${index}` as const)}
-                    placeholder={`Image URL ${index + 1}`}
-                    className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[#1a7a4a] focus:outline-none focus:ring-2 focus:ring-[#1a7a4a]/20"
-                  />
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-slate-700">Product Images</label>
+              <ImageUpload
+                value={imageUrls}
+                onChange={(urls) => setImageUrls(urls)}
+              />
             </div>
 
             <div className="space-y-3">
@@ -382,9 +369,6 @@ export default function EditVendorProductPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
             <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex items-center justify-center rounded-full bg-[#1a7a4a] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#166033] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {submitting ? "Updating..." : "Update Product"}
             </button>

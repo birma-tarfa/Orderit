@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initializePayment } from "@/lib/paystack";
-import { prisma } from "@/lib/prisma";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,15 +16,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify order exists and get buyer info
-    const order = await prisma.orders.findUnique({
-      where: { id: orderId },
-      include: {
-        buyer: true,
-      },
-    });
+    const supabase = createSupabaseServerClient();
 
-    if (!order) {
+    // Verify order exists and get buyer info
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('*, buyer(*)')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
@@ -49,14 +51,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Update order with payment reference
-    await prisma.orders.update({
-      where: { id: orderId },
-      data: {
-        payment_method: "paystack",
-        payment_reference: reference,
-        payment_status: "pending",
-      },
-    });
+    await supabase.from('orders').update({
+      payment_method: "paystack",
+      payment_reference: reference,
+      payment_status: "pending",
+    }).eq('id', orderId);
 
     return NextResponse.json({
       status: true,

@@ -47,18 +47,8 @@ export default function VendorProductsPage() {
         return;
       }
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("vendor_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .limit(1)
-        .single();
-
-      if (profileError) {
-        console.error(profileError);
-      }
-
-      const vendorId = profileData?.id || user.id;
+      const { data: vp } = await supabase.from("vendor_profiles").select("id").eq("user_id", user.id).single();
+      const vendorId = vp?.id;
 
       const { data, error: productsError } = await supabase
         .from("products")

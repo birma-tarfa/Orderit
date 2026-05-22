@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPayment } from "@/lib/flutterwave";
-import { prisma } from "@/lib/prisma";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,12 +32,16 @@ export async function GET(request: NextRequest) {
     const txRef = flutterwaveResponse.data.tx_ref;
     const orderId = txRef.split("_")[1];
 
-    // Get the order
-    const order = await prisma.orders.findUnique({
-      where: { id: orderId },
-    });
+    const supabase = createSupabaseServerClient();
 
-    if (!order) {
+    // Get the order
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
       return NextResponse.json(
         { error: "Order not found" },
         { status: 404 }
@@ -47,13 +52,10 @@ export async function GET(request: NextRequest) {
     const paymentStatus = flutterwaveResponse.data.status;
     const isPaid = paymentStatus === "successful";
 
-    await prisma.orders.update({
-      where: { id: orderId },
-      data: {
-        payment_status: isPaid ? "paid" : "failed",
-        status: isPaid ? "confirmed" : "pending",
-      },
-    });
+    await supabase.from('orders').update({
+      payment_status: isPaid ? "paid" : "failed",
+      status: isPaid ? "confirmed" : "pending",
+    }).eq('id', orderId);
 
     return NextResponse.json({
       verified: isPaid,

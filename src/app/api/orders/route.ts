@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
 
 interface OrderItemPayload {
   productId: string;
@@ -15,72 +14,46 @@ export async function POST(request: NextRequest) {
     const customerName = typeof body.customerName === "string" ? body.customerName.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim() : "";
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!items || !Array.isArray(items) || items.length === 0)
       return NextResponse.json({ error: "Cart items are required" }, { status: 400 });
-    }
-
-    if (!deliveryAddress) {
+    if (!deliveryAddress)
       return NextResponse.json({ error: "Delivery address is required" }, { status: 400 });
-    }
-
-    if (!customerName) {
+    if (!customerName)
       return NextResponse.json({ error: "Customer name is required" }, { status: 400 });
-    }
-
-    if (!email) {
+    if (!email)
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
-    }
 
     const supabase = createSupabaseServerClient();
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-
-    if (!userId) {
+    if (!userId)
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    }
 
     const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (userError || !user || user.role !== "buyer") {
+      .from("users").select("role").eq("id", userId).single();
+    if (userError || !user || user.role !== "buyer")
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
 
     const productIds = items.map((item) => item.productId);
+    const { data: products, error: productsError } = await supabase
+      .from("products")
+      .select("id, name, price, images, vendor_id, stock_quantity")
+      .in("id", productIds);
 
-    const products = await prisma.products.findMany({
-      where: {
-        id: {
-          in: productIds,
-        },
-      },
-    });
-
-    if (products.length !== productIds.length) {
+    if (productsError || !products || products.length !== productIds.length)
       return NextResponse.json({ error: "One or more cart items are invalid" }, { status: 400 });
-    }
 
-    const vendorIds = Array.from(new Set(products.map((product) => product.vendor_id)));
-    if (vendorIds.length !== 1) {
+    const vendorIds = Array.from(new Set(products.map((p) => p.vendor_id)));
+    if (vendorIds.length !== 1)
       return NextResponse.json(
-        { error: "All items must be from the same vendor for a single order" },
-        { status: 400 }
+        { error: "All items must be from the same vendor" }, { status: 400 }
       );
-    }
 
     const orderItems = items.map((item) => {
-      const product = products.find((product) => product.id === item.productId);
-      if (!product) {
-        throw new Error("Invalid product in cart items");
-      }
-
-      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-        throw new Error("Cart item quantity must be a positive integer");
-      }
-
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) throw new Error("Invalid product in cart");
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0)
+        throw new Error("Quantity must be a positive integer");
       return {
         product_id: product.id,
         quantity: item.quantity,
@@ -91,13 +64,13 @@ export async function POST(request: NextRequest) {
     });
 
     const subtotal = orderItems.reduce(
-      (sum, item) => sum + Number(item.price_at_purchase) * item.quantity,
-      0
+      (sum, item) => sum + Number(item.price_at_purchase) * item.quantity, 0
     );
     const deliveryFee = 1000;
 
-    const order = await prisma.orders.create({
-      data: {
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert({
         buyer_id: userId,
         vendor_id: vendorIds[0],
         status: "pending",
@@ -106,16 +79,20 @@ export async function POST(request: NextRequest) {
         total: subtotal + deliveryFee,
         payment_method: "pending",
         payment_status: "pending",
-        delivery_address: {
-          address: deliveryAddress,
-          customerName,
-          email,
-        },
-        orderItems: {
-          create: orderItems,
-        },
-      },
-    });
+        delivery_address: { address: deliveryAddress, customerName, email },
+      })
+      .select("id")
+      .single();
+
+    if (orderError || !order)
+      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems.map((item) => ({ ...item, order_id: order.id })));
+
+    if (itemsError)
+      return NextResponse.json({ error: "Failed to save order items" }, { status: 500 });
 
     return NextResponse.json({ status: true, orderId: order.id }, { status: 201 });
   } catch (error) {
