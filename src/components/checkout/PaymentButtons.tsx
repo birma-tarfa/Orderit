@@ -44,12 +44,12 @@ export function PaymentButtons({
 
       const data = await response.json();
 
-      if (!data.status || !data.data?.authorization_url) {
+      if (!data.authorization_url) {
         throw new Error(data.error || "Failed to initialize Paystack payment");
       }
 
       // Redirect to Paystack payment page
-      window.location.href = data.data.authorization_url;
+      window.location.href = data.authorization_url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment initialization failed");
       setLoading(null);

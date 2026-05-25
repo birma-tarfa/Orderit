@@ -1,75 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
-import { initializePayment } from "@/lib/paystack";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { orderId, email, amount } = body;
+    const { orderId, email, amount } = await request.json();
 
-    // Validate inputs
-    if (!orderId || !email || !amount) {
-      return NextResponse.json(
-        { error: "Missing required fields: orderId, email, amount" },
-        { status: 400 }
-      );
-    }
+    if (!orderId || !email || !amount)
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
     const supabase = createSupabaseServerClient();
 
-    // Verify order exists and get buyer info
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('*, buyer(*)')
-      .eq('id', orderId)
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select("id, total, status")
+      .eq("id", orderId)
       .single();
 
-    if (orderError || !order) {
+    if (error || !order)
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
 
-    // Generate unique reference for this transaction
-    const reference = `paystack_${orderId}_${Date.now()}`;
+    const reference = `order_${orderId}_${Date.now()}`;
 
-    // Initialize Paystack payment
-    const paystackResponse = await initializePayment(
-      email,
-      amount * 100, // Convert to kobo
-      reference,
-      {
-        orderId,
-        buyerId: order.buyer_id,
-      }
-    );
-
-    if (!paystackResponse.status || !paystackResponse.data) {
-      return NextResponse.json(
-        { error: paystackResponse.message || "Failed to initialize payment" },
-        { status: 400 }
-      );
-    }
-
-    // Update order with payment reference
-    await supabase.from('orders').update({
-      payment_method: "paystack",
-      payment_reference: reference,
-      payment_status: "pending",
-    }).eq('id', orderId);
-
-    return NextResponse.json({
-      status: true,
-      data: {
-        authorization_url: paystackResponse.data.authorization_url,
-        access_code: paystackResponse.data.access_code,
-        reference: paystackResponse.data.reference,
+    const response = await fetch("https://api.paystack.co/transaction/initialize", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        email,
+        amount: Math.round(amount * 100),
+        reference,
+        metadata: { orderId },
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/verify?gateway=paystack&reference=${reference}&orderId=${orderId}`,
+      }),
     });
+
+    const data = await response.json();
+
+    console.error("Paystack response:", JSON.stringify(data));
+    if (!data.status)
+      return NextResponse.json({ error: data.message }, { status: 400 });
+
+    await supabase
+      .from("orders")
+      .update({ payment_reference: reference, payment_method: "paystack" })
+      .eq("id", orderId);
+
+    return NextResponse.json({ authorization_url: data.data.authorization_url, reference });
   } catch (error) {
     console.error("Paystack initialize error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

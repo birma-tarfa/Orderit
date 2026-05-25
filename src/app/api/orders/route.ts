@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ status: true, orderId: order.id }, { status: 201 });
   } catch (error) {
-    console.error("Order create error:", error);
+    console.error("Order create error:", JSON.stringify(error));
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
