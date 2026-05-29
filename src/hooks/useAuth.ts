@@ -11,7 +11,7 @@ export function useAuth() {
 
   const loadSession = async () => {
     setIsLoading(true);
-    const { data, error } = await createClient().auth.getSession();
+    const { data, error } = await createClient().auth.getUser();
 
     if (error) {
       clearAuth();
@@ -19,7 +19,7 @@ export function useAuth() {
       return;
     }
 
-    const sessionUser = data?.session?.user;
+    const sessionUser = data?.user;
     if (!sessionUser) {
       clearAuth();
       setIsLoading(false);

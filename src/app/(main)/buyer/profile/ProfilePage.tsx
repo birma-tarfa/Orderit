@@ -1,6 +1,7 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import ProfilePage from "./page";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UserProfile {
   id: string;
@@ -20,37 +21,91 @@ interface Address {
   is_default: boolean;
 }
 
-async function requireBuyerUser() {
-  const supabase = createSupabaseServerClient();
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData?.session?.user?.id;
+export default function ProfilePage() {
+  const { user: authUser, loading } = useAuth();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
-  if (!userId) {
-    redirect("/login");
+  useEffect(() => {
+    if (authUser) {
+      setUser({
+        id: authUser.id,
+        email: authUser.email || "",
+        full_name: authUser.user_metadata?.full_name,
+        phone: authUser.user_metadata?.phone,
+        avatar_url: authUser.user_metadata?.avatar_url,
+      });
+    }
+  }, [authUser]);
+
+  if (loading) {
+    return <div className="p-8">Loading...</div>;
   }
 
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("id, email, full_name, phone, avatar_url, role")
-    .eq("id", userId)
-    .single();
-
-  if (error || !user || user.role !== "buyer") {
-    redirect("/marketplace");
+  if (!user) {
+    return <div className="p-8">Please log in to view your profile</div>;
   }
 
-  return user as UserProfile;
-}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h1 className="text-2xl font-bold">My Profile</h1>
+          </div>
 
-async function getUserAddresses(userId: string): Promise<Address[]> {
-  // For now, return empty array since we don't have an addresses table
-  // In a real implementation, you'd fetch from a user_addresses table
-  return [];
-}
+          <div className="px-6 py-6 space-y-6">
+            {/* Profile Information */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Personal Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <p className="mt-1 text-gray-900">{user.full_name || "Not set"}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <p className="mt-1 text-gray-900">{user.email}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Phone
+                  </label>
+                  <p className="mt-1 text-gray-900">{user.phone || "Not set"}</p>
+                </div>
+              </div>
+            </div>
 
-export default async function ProfilePageWrapper() {
-  const user = await requireBuyerUser();
-  const addresses = await getUserAddresses(user.id);
-
-  return <ProfilePage user={user} addresses={addresses} />;
+            {/* Addresses */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Saved Addresses</h2>
+              {addresses.length === 0 ? (
+                <p className="text-gray-500">No addresses saved yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <div
+                      key={address.id}
+                      className="p-3 border border-gray-200 rounded"
+                    >
+                      <p className="font-medium">{address.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {address.street}, {address.city}, {address.state}
+                      </p>
+                      <p className="text-sm text-gray-600">{address.phone}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -79,19 +79,43 @@ export default function VendorOrdersPage() {
 
       const { data, error: ordersError } = await supabase
         .from("orders")
-        .select(`id,buyer_id,total,status,created_at,buyer:users(full_name),order_items(id)`)
+        .select("id,buyer_id,total,status,created_at")
         .eq("vendor_id", vendorId)
         .order("created_at", { ascending: false });
 
       if (ordersError) {
         setError(ordersError.message);
       } else {
+        const orderList = data || [];
+        const orderIds = orderList.map((o: any) => o.id);
+        const buyerIds = Array.from(new Set(orderList.map((o: any) => o.buyer_id).filter(Boolean)));
+
+        const { data: buyers } = await supabase
+          .from("users")
+          .select("id,full_name")
+          .in("id", buyerIds);
+
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("order_id")
+          .in("order_id", orderIds);
+
+        const itemsCountByOrder: Record<string, number> = (items || []).reduce((acc: any, it: any) => {
+          acc[it.order_id] = (acc[it.order_id] || 0) + 1;
+          return acc;
+        }, {});
+
+        const buyersById: Record<string, any> = (buyers || []).reduce((acc: any, b: any) => {
+          acc[b.id] = b;
+          return acc;
+        }, {});
+
         setOrders(
-          (data || []).map((order: any) => ({
+          orderList.map((order: any) => ({
             id: order.id,
             buyer_id: order.buyer_id,
-            buyer_name: order.buyer?.full_name || "Unknown buyer",
-            items_count: order.order_items?.length || 0,
+            buyer_name: buyersById[order.buyer_id]?.full_name || "Unknown buyer",
+            items_count: itemsCountByOrder[order.id] || 0,
             total: Number(order.total || 0),
             status: order.status,
             created_at: order.created_at,
