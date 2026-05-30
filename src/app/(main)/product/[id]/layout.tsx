@@ -27,13 +27,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     const supabase = createSupabaseServerClient();
     const { data: product } = await supabase
       .from('products')
-      .select(
-        `
-        *,
-        vendor:users(shop_name),
-        category:categories(name)
-      `
-      )
+      .select('*')
       .eq('id', params.id)
       .eq('is_active', true)
       .single();
@@ -45,7 +39,24 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       };
     }
 
-    const productData = product as ProductWithVendor;
+    // Fetch vendor and category separately
+    const { data: vendor } = await supabase
+      .from('users')
+      .select('shop_name')
+      .eq('id', product.vendor_id)
+      .single();
+
+    const { data: category } = await supabase
+      .from('categories')
+      .select('name')
+      .eq('id', product.category_id)
+      .single();
+
+    const productData = {
+      ...product,
+      vendor: vendor || { shop_name: '' },
+      category: category || { name: '' },
+    } as ProductWithVendor;
     return {
       title: `${productData.name} | FreshDrop`,
       description: productData.description?.substring(0, 160) || `Order ${productData.name} from ${productData.vendor.shop_name}`,

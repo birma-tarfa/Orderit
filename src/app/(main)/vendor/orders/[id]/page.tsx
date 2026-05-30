@@ -93,9 +93,7 @@ export default function VendorOrderDetailPage() {
           payment_method,
           payment_status,
           delivery_address,
-          created_at,
-          buyer:users(full_name),
-          order_items(id,product_name,quantity,price_at_purchase,product_image)
+          created_at
         `)
         .eq("id", orderId)
         .eq("vendor_id", vendorId)
@@ -106,6 +104,19 @@ export default function VendorOrderDetailPage() {
         setLoading(false);
         return;
       }
+
+      // Fetch buyer details separately
+      const { data: buyer, error: buyerError } = await supabase
+        .from("users")
+        .select("full_name")
+        .eq("id", data.buyer_id)
+        .single();
+
+      // Fetch order items separately
+      const { data: items, error: itemsError } = await supabase
+        .from("order_items")
+        .select("id,product_name,quantity,price_at_purchase,product_image")
+        .eq("order_id", orderId);
 
       setOrder({
         id: data.id,
@@ -118,8 +129,8 @@ export default function VendorOrderDetailPage() {
         payment_status: data.payment_status,
         delivery_address: data.delivery_address,
         created_at: data.created_at,
-        buyer_name: data.buyer?.full_name || "Buyer",
-        order_items: (data.order_items || []).map((item: any) => ({
+        buyer_name: buyer?.full_name || "Buyer",
+        order_items: (items || []).map((item: any) => ({
           id: item.id,
           product_name: item.product_name,
           quantity: item.quantity,

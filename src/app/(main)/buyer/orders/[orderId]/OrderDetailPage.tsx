@@ -56,6 +56,7 @@ async function requireBuyerUser() {
 async function getOrderDetail(orderId: string, userId: string): Promise<OrderDetail | null> {
   const supabase = createSupabaseServerClient();
 
+  // Fetch order without relationship hints to avoid PGRST200 errors
   const { data: order, error } = await supabase
     .from("orders")
     .select(`
@@ -70,16 +71,7 @@ async function getOrderDetail(orderId: string, userId: string): Promise<OrderDet
       payment_reference,
       payment_status,
       delivery_address,
-      created_at,
-      vendor:users!VendorOrders(id, full_name, email, vendorProfile:vendor_profiles(shop_name)),
-      orderItems:order_items(
-        id,
-        product_id,
-        quantity,
-        price_at_purchase,
-        product_name,
-        product_image
-      )
+      created_at
     `)
     .eq("id", orderId)
     .eq("buyer_id", userId)
@@ -90,16 +82,40 @@ async function getOrderDetail(orderId: string, userId: string): Promise<OrderDet
     return null;
   }
 
+  // Fetch vendor details separately
+  const { data: vendor, error: vendorError } = await supabase
+    .from("users")
+    .select("id,full_name,email")
+    .eq("id", order.vendor_id)
+    .single();
+
+  // Fetch vendor profile separately
+  const { data: vendorProfile, error: profileError } = await supabase
+    .from("vendor_profiles")
+    .select("shop_name")
+    .eq("user_id", order.vendor_id)
+    .single();
+
+  // Fetch order items separately
+  const { data: orderItems, error: itemsError } = await supabase
+    .from("order_items")
+    .select("id,product_id,quantity,price_at_purchase,product_name,product_image")
+    .eq("order_id", orderId);
+
+  if (itemsError) {
+    console.error("Error fetching order items:", itemsError);
+  }
+
   // Transform the vendor data
-  const vendorProfile = order.vendor.vendorProfile;
   const transformedOrder = {
     ...order,
     vendor: {
-      id: order.vendor.id,
-      full_name: order.vendor.full_name,
-      email: order.vendor.email,
+      id: vendor?.id,
+      full_name: vendor?.full_name,
+      email: vendor?.email,
       shop_name: vendorProfile?.shop_name,
     },
+    orderItems: orderItems || [],
   };
 
   return transformedOrder as OrderDetail;

@@ -41,7 +41,7 @@ export function Navbar() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const { user } = useAuthStore();
+  const { user, profile } = useAuthStore();
   const { signOut } = useAuth();
   const cartCount = useCartStore((state) => state.items.length);
   const currency = useCurrencyStore((state) => state.currency);
@@ -285,6 +285,11 @@ export function Navbar() {
                     </Link>
                     {isVendor ? (
                       <>
+                        {profile?.id ? (
+                          <Link href={`/vendor/${profile.id}/store`} className="block px-4 py-3 text-sm hover:bg-slate-100">
+                            My Store
+                          </Link>
+                        ) : null}
                         <Link href="/vendor/dashboard" className="block px-4 py-3 text-sm hover:bg-slate-100">
                           Vendor Dashboard
                         </Link>

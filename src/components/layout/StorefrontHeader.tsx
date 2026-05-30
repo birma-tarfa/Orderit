@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Star, MapPin, Calendar, Package, MessageSquare, Heart, Share2 } from 'lucide-react';
+import { Star, MapPin, Calendar, Package, MessageSquare, Heart, Share2, Clock, Edit3 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { VendorProfile } from '@/types';
@@ -18,7 +18,11 @@ interface StorefrontHeaderProps {
   };
 }
 
-export function StorefrontHeader({ vendor }: StorefrontHeaderProps) {
+interface StorefrontHeaderPropsWithOwner extends StorefrontHeaderProps {
+  isOwner?: boolean;
+}
+
+export function StorefrontHeader({ vendor, isOwner }: StorefrontHeaderPropsWithOwner) {
   return (
     <div className="space-y-6">
       {/* Banner Image */}
@@ -36,6 +40,17 @@ export function StorefrontHeader({ vendor }: StorefrontHeaderProps) {
             <Package className="h-24 w-24 text-white" />
           </div>
         )}
+        {/* Owner edit overlay: link to settings branding */}
+        {isOwner ? (
+          <a
+            href="/vendor/settings#branding"
+            className="absolute right-4 top-4 hidden items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-sm text-slate-700 shadow hover:bg-white md:flex"
+            title="Edit banner"
+          >
+            <Edit3 className="h-4 w-4" />
+            Edit
+          </a>
+        ) : null}
         {vendor.is_verified && (
           <Badge className="absolute right-6 top-6 bg-blue-100 text-blue-800">
             Open Now
@@ -60,6 +75,15 @@ export function StorefrontHeader({ vendor }: StorefrontHeaderProps) {
                 <Package className="h-12 w-12" />
               </div>
             )}
+            {isOwner ? (
+              <a
+                href="/vendor/settings#branding"
+                className="absolute right-0 bottom-0 hidden translate-y-6 translate-x-6 items-center gap-2 rounded-full bg-white/90 p-2 text-sm text-slate-700 shadow hover:bg-white md:flex"
+                title="Edit logo"
+              >
+                <Edit3 className="h-4 w-4" />
+              </a>
+            ) : null}
           </div>
 
           {/* Vendor Details */}

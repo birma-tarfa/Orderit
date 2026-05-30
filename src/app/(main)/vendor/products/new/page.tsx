@@ -130,20 +130,11 @@ export default function NewVendorProductPage() {
         return;
       }
 
-      const { data: vendorProfile, error: profileError } = await supabase
-        .from("vendor_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profileError || !vendorProfile) {
-        throw new Error("Unable to determine vendor profile. Please try again.");
-      }
 
       const imageList = imageUrls.slice(0, 5);
 
       const { error } = await supabase.from("products").insert({
-        vendor_id: vendorProfile.id,
+        vendor_id: user.id,
         name: values.name,
         description: values.description || null,
         category_id: values.category_id || null,

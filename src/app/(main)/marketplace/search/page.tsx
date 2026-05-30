@@ -96,8 +96,7 @@ function SearchContent() {
       let query = supabase
         .from('products')
         .select(`
-          *,
-          vendor:users(full_name)
+          *
         `, { count: 'exact' })
         .eq('is_active', true);
 
@@ -117,11 +116,6 @@ function SearchContent() {
       }
       if (filters.maxPrice) {
         query = query.lte('price', parseInt(filters.maxPrice));
-      }
-
-      // State filter (through vendor location)
-      if (filters.state) {
-        query = query.eq('vendor.location', filters.state);
       }
 
       // Rating filter
@@ -165,7 +159,29 @@ function SearchContent() {
         setProducts([]);
         setTotalCount(0);
       } else {
-        setProducts(data || []);
+        // Fetch vendor details for all products
+        if (data && data.length > 0) {
+          const vendorIds = [...new Set(data.map(p => p.vendor_id))];
+          const { data: vendors } = await supabase
+            .from('users')
+            .select('id,full_name')
+            .in('id', vendorIds);
+
+          const vendorsById = (vendors || []).reduce((acc: any, v: any) => {
+            acc[v.id] = v;
+            return acc;
+          }, {});
+
+          // Apply state filter based on vendor location (if needed)
+          let filtered = data.map((p: any) => ({
+            ...p,
+            vendor: vendorsById[p.vendor_id] || { full_name: 'Unknown' },
+          }));
+
+          setProducts(filtered);
+        } else {
+          setProducts([]);
+        }
         setTotalCount(count || 0);
       }
 

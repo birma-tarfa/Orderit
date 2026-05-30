@@ -8,9 +8,11 @@ interface ImageUploadProps {
   value: string[];
   onChange: (urls: string[]) => void;
   maxImages?: number;
+  // optional path prefix inside the bucket (e.g. 'logos/' or 'banners/')
+  pathPrefix?: string;
 }
 
-export function ImageUpload({ value, onChange, maxImages = 5 }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, maxImages = 5, pathPrefix }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,10 @@ export function ImageUpload({ value, onChange, maxImages = 5 }: ImageUploadProps
   const uploadFile = useCallback(async (file: File): Promise<string> => {
     if (file.size > 5 * 1024 * 1024) throw new Error("File size exceeds 5MB");
     const ext = file.name.split(".").pop();
-    const fileName = `products/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
+    const prefix = pathPrefix ?? 'products/';
+    const fileName = `${prefix}${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}.${ext}`;
     const supabase = createClient();
     const { error: uploadError } = await supabase.storage
       .from("product-images")
@@ -27,7 +32,7 @@ export function ImageUpload({ value, onChange, maxImages = 5 }: ImageUploadProps
     if (uploadError) throw uploadError;
     const { data } = supabase.storage.from("product-images").getPublicUrl(fileName);
     return data.publicUrl;
-  }, []);
+  }, [pathPrefix]);
 
   const handleFiles = useCallback(async (files: FileList) => {
     if (value.length >= maxImages) {

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { StorefrontHeader } from '@/components/layout/StorefrontHeader';
-import { ProductCard } from '@/components/product/ProductCard';
+import ClientSideProductGrid from '@/components/vendor/ClientSideProductGrid';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: VendorStorePageProps): Promis
   try {
     const supabase = createSupabaseServerClient();
     const { data: vendor } = await supabase
-      .from('users')
+      .from('vendor_profiles')
       .select('shop_name, shop_description')
       .eq('id', params.vendorId)
       .single();
@@ -86,13 +86,9 @@ async function getVendorData(vendorId: string) {
   const supabase = createSupabaseServerClient();
 
   const { data: vendor, error: vendorError } = await supabase
-    .from('users')
-    .select(`
-      *,
-      _count:products(count)
-    `)
+    .from('vendor_profiles')
+    .select('*')
     .eq('id', vendorId)
-    .eq('role', 'vendor')
     .single();
 
   if (vendorError || !vendor) {
@@ -122,17 +118,18 @@ async function getVendorData(vendorId: string) {
   } as VendorWithStats;
 }
 
-async function getVendorProducts(vendorId: string, search?: string, categoryId?: string) {
+async function getVendorProducts(vendorId: string, search?: string, categoryId?: string, includeInactive = false) {
   const supabase = createSupabaseServerClient();
 
   let query = supabase
     .from('products')
-    .select(`
-      *,
-      category:categories(name)
-    `)
+    .select('*')
     .eq('vendor_id', vendorId)
-    .eq('is_active', true);
+    ;
+
+  if (!includeInactive) {
+    query = query.eq('is_active', true);
+  }
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
@@ -145,7 +142,28 @@ async function getVendorProducts(vendorId: string, search?: string, categoryId?:
   const { data: products } = await query
     .order('created_at', { ascending: false });
 
-  return products as ProductWithCategory[] || [];
+  if (!products || products.length === 0) return [];
+
+  // Batch fetch categories
+  const categoryIds = [...new Set(products.map(p => p.category_id).filter(Boolean))];
+  const { data: categories } = categoryIds.length
+    ? await supabase
+        .from('categories')
+        .select('id,name')
+        .in('id', categoryIds)
+    : { data: [] };
+
+  const categoriesById = (categories || []).reduce((acc: any, c: any) => {
+    acc[c.id] = c;
+    return acc;
+  }, {});
+
+  const productsWithCategories = products.map((p: any) => ({
+    ...p,
+    category: categoriesById[p.category_id],
+  }));
+
+  return productsWithCategories as ProductWithCategory[] || [];
 }
 
 async function getVendorCategories(vendorId: string) {
@@ -170,13 +188,38 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
     notFound();
   }
 
-  const products = await getVendorProducts(params.vendorId);
+  // determine if current user is the owner of this store
+  const supabase = createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const currentUserId = userData?.user?.id;
+
+  let isOwner = false;
+  if (currentUserId) {
+    const { data: ownerProfile } = await supabase
+      .from('vendor_profiles')
+      .select('id,user_id')
+      .eq('user_id', currentUserId)
+      .single();
+
+    if (ownerProfile && ownerProfile.id === params.vendorId) {
+      isOwner = true;
+    }
+  }
+
+  const products = await getVendorProducts(params.vendorId, undefined, undefined, isOwner);
   const categories = await getVendorCategories(params.vendorId);
 
   return (
     <div className="space-y-8">
       {/* Storefront Header */}
-      <StorefrontHeader vendor={vendor} />
+      <StorefrontHeader vendor={vendor} isOwner={isOwner} />
+
+      {isOwner && (
+        <div>
+          {/* owner controls */}
+          {/* Client-side controls will be mounted below alongside product grid */}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-slate-200">
@@ -221,6 +264,7 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
           </div>
 
           {/* Products Grid */}
+          {/* We'll render a client-side grid so owner can toggle public/owner view */}
           {products.length === 0 ? (
             <div className="py-20 text-center">
               <Package className="mx-auto h-16 w-16 text-slate-400" />
@@ -230,18 +274,10 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={{
-                    ...product,
-                    vendor: {
-                      full_name: vendor.shop_name,
-                    },
-                  }}
-                />
-              ))}
+            <div>
+              {/* Client-side product grid and owner controls */}
+              {/* @ts-expect-error Server component passing JSON */}
+              <ClientSideProductGrid vendorId={params.vendorId} products={products} isOwner={isOwner} vendorName={vendor.shop_name} />
             </div>
           )}
         </div>

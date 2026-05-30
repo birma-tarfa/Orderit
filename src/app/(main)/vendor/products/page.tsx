@@ -47,12 +47,16 @@ export default function VendorProductsPage() {
         return;
       }
 
-      const { data: vp } = await supabase.from("vendor_profiles").select("id").eq("user_id", user.id).single();
+      const { data: vp } = await supabase
+        .from("vendor_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
       const vendorId = vp?.id;
 
       const { data, error: productsError } = await supabase
         .from("products")
-        .select(`id,name,price,stock_quantity,is_active,images,category:categories(name)`)
+        .select(`id,name,price,stock_quantity,is_active,images,category_id`)
         .eq("vendor_id", vendorId)
         .order("created_at", { ascending: false });
 
@@ -60,7 +64,24 @@ export default function VendorProductsPage() {
         setError(productsError.message);
       }
 
-      setProducts(data || []);
+      const productList = data || [];
+      const categoryIds = Array.from(new Set(productList.map((p: any) => p.category_id).filter(Boolean)));
+      
+      const { data: categories } = categoryIds.length
+        ? await supabase.from("categories").select("id,name").in("id", categoryIds)
+        : { data: [] };
+
+      const categoriesById: Record<string, any> = (categories || []).reduce((acc: any, cat: any) => {
+        acc[cat.id] = cat;
+        return acc;
+      }, {});
+
+      const productsWithCategories = productList.map((p: any) => ({
+        ...p,
+        category: categoriesById[p.category_id],
+      }));
+
+      setProducts(productsWithCategories);
       setLoading(false);
     };
 

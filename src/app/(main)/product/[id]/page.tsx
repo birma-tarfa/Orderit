@@ -50,16 +50,10 @@ export default function ProductDetailPage() {
       try {
         setLoading(true);
 
-        // Fetch product details
+        // Fetch product details without relationship hints
         const { data: productData, error: productError } = await supabase
           .from('products')
-          .select(
-            `
-            *,
-            vendor:users(id, full_name, shop_name, rating, total_sales, created_at, is_verified),
-            category:categories(name)
-          `
-          )
+          .select('*')
           .eq('id', productId)
           .eq('is_active', true)
           .single();
@@ -69,27 +63,73 @@ export default function ProductDetailPage() {
           return;
         }
 
-        setProduct(productData);
+        // Fetch vendor details for this product
+        const { data: vendor } = await supabase
+          .from('users')
+          .select('id,full_name,shop_name,rating,total_sales,created_at,is_verified')
+          .eq('id', productData.vendor_id)
+          .single();
+
+        // Fetch category details for this product
+        const { data: category } = await supabase
+          .from('categories')
+          .select('name')
+          .eq('id', productData.category_id)
+          .single();
+
+        const enrichedProduct = {
+          ...productData,
+          vendor: vendor || {},
+          category: category || {},
+        };
+
+        setProduct(enrichedProduct);
         setMainImage(0);
 
         // Fetch related products (same category, different vendor)
         if (productData.category_id) {
           const { data: related } = await supabase
             .from('products')
-            .select(
-              `
-              *,
-              vendor:users(id, full_name, shop_name, rating, total_sales, created_at, is_verified),
-              category:categories(name)
-            `
-            )
+            .select('*')
             .eq('category_id', productData.category_id)
             .eq('is_active', true)
             .neq('id', productId)
             .limit(6);
 
-          if (related) {
-            setRelatedProducts(related);
+          if (related && related.length > 0) {
+            // Batch fetch vendors for related products
+            const relatedVendorIds = [...new Set(related.map(p => p.vendor_id))];
+            const { data: relatedVendors } = await supabase
+              .from('users')
+              .select('id,full_name,shop_name,rating,total_sales,created_at,is_verified')
+              .in('id', relatedVendorIds);
+
+            const vendorsById = (relatedVendors || []).reduce((acc: any, v: any) => {
+              acc[v.id] = v;
+              return acc;
+            }, {});
+
+            // Batch fetch categories for related products
+            const relatedCategoryIds = [...new Set(related.map(p => p.category_id).filter(Boolean))];
+            const { data: relatedCategories } = relatedCategoryIds.length
+              ? await supabase
+                  .from('categories')
+                  .select('id,name')
+                  .in('id', relatedCategoryIds)
+              : { data: [] };
+
+            const categoriesById = (relatedCategories || []).reduce((acc: any, c: any) => {
+              acc[c.id] = c;
+              return acc;
+            }, {});
+
+            const enrichedRelated = related.map((p: any) => ({
+              ...p,
+              vendor: vendorsById[p.vendor_id] || {},
+              category: categoriesById[p.category_id] || {},
+            }));
+
+            setRelatedProducts(enrichedRelated);
           }
         }
       } catch (error) {

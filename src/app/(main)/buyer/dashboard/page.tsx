@@ -88,8 +88,7 @@ async function getRecentOrders(userId: string): Promise<RecentOrder[]> {
       status,
       payment_status,
       created_at,
-      vendor:users!VendorOrders(full_name, email),
-      orderItems:order_items(product_name, product_image)
+      vendor_id
     `)
     .eq("buyer_id", userId)
     .order("created_at", { ascending: false })
@@ -100,7 +99,41 @@ async function getRecentOrders(userId: string): Promise<RecentOrder[]> {
     return [];
   }
 
-  return orders || [];
+  if (!orders || orders.length === 0) return [];
+
+  // Batch fetch vendor details
+  const vendorIds = [...new Set(orders.map(o => o.vendor_id))];
+  const { data: vendors } = await supabase
+    .from("users")
+    .select("id,full_name,email")
+    .in("id", vendorIds);
+
+  const vendorsById = (vendors || []).reduce((acc: any, v: any) => {
+    acc[v.id] = v;
+    return acc;
+  }, {});
+
+  // Batch fetch order items
+  const orderIds = orders.map(o => o.id);
+  const { data: allItems } = await supabase
+    .from("order_items")
+    .select("order_id,product_name,product_image")
+    .in("order_id", orderIds);
+
+  const itemsByOrderId = (allItems || []).reduce((acc: any, item: any) => {
+    if (!acc[item.order_id]) acc[item.order_id] = [];
+    acc[item.order_id].push(item);
+    return acc;
+  }, {});
+
+  // Map vendors and items back to orders
+  const enrichedOrders = orders.map((order: any) => ({
+    ...order,
+    vendor: vendorsById[order.vendor_id] || { full_name: "Unknown", email: "" },
+    orderItems: itemsByOrderId[order.id] || [],
+  }));
+
+  return enrichedOrders || [];
 }
 
 function formatCurrency(value: number) {
