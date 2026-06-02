@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/client";
 import { ProductCard } from "@/components/product/ProductCard";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { ProductCardSkeleton, VendorCardSkeleton, CategoryCardSkeleton } from "@/components/skeletons";
 
 async function getFeaturedProducts() {
-  const supabase = createSupabaseServerClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("products")
     .select(`*, vendor:vendor_profiles(shop_name, logo_url), category:categories(id,name)`)
@@ -26,7 +27,7 @@ async function getFeaturedProducts() {
 }
 
 async function getTopVendors() {
-  const supabase = createSupabaseServerClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("vendor_profiles")
     .select("*")
@@ -38,7 +39,7 @@ async function getTopVendors() {
 }
 
 async function getRecentProducts() {
-  const supabase = createSupabaseServerClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("products")
     .select(`*, vendor:vendor_profiles(shop_name, logo_url), category:categories(id,name)`)
@@ -53,7 +54,7 @@ async function getRecentProducts() {
 }
 
 async function getCategories() {
-  const supabase = createSupabaseServerClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("categories")
     .select("*")
@@ -64,14 +65,14 @@ async function getCategories() {
 
 export default function MarketplacePage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [topVendors, setTopVendors] = useState([]);
-  const [recentProducts, setRecentProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [topVendors, setTopVendors] = useState<any[]>([]);
+  const [recentProducts, setRecentProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
-  useState(() => {
+  useEffect(() => {
     const loadData = async () => {
       const [featured, vendors, recent, cats] = await Promise.all([
         getFeaturedProducts(),
@@ -88,7 +89,7 @@ export default function MarketplacePage() {
     loadData();
   }, []);
 
-  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/marketplace/search?q=${encodeURIComponent(searchQuery)}`);
