@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from 'next/link';
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductCardSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/Button";
@@ -53,6 +54,7 @@ function SearchContent() {
   });
 
   const [products, setProducts] = useState<(Product & { vendor: { full_name: string } })[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -112,6 +114,22 @@ function SearchContent() {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+
+      // Fetch vendors if no category filter
+      if (!filters.category || filters.category.length === 0) {
+        let vendorQuery = supabase
+          .from('vendor_profiles')
+          .select('id, user_id, shop_name, shop_description, logo_url, rating, total_sales, is_verified');
+
+        if (filters.q) {
+          vendorQuery = vendorQuery.ilike('shop_name', `%${filters.q}%`);
+        }
+
+        const { data: vendorData } = await vendorQuery.limit(6);
+        setVendors(vendorData || []);
+      } else {
+        setVendors([]);
+      }
 
       let query = supabase
         .from('products')
@@ -487,6 +505,60 @@ function SearchContent() {
         )}
 
         {/* Products Grid */}
+        {/* Vendors Section */}
+        {!loading && vendors.length > 0 && (
+          <div className="mb-12">
+            <h2 className="mb-6 text-2xl font-semibold">Vendors</h2>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {vendors.map((vendor) => (
+                <Link key={vendor.id} href={`/vendor/${vendor.id}/store`}>
+                  <div className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-lg">
+                    <div className="flex items-start gap-4">
+                      {vendor.logo_url && (
+                        <img
+                          src={vendor.logo_url}
+                          alt={vendor.shop_name}
+                          className="h-16 w-16 rounded-full object-cover"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-slate-900">{vendor.shop_name}</h3>
+                          {vendor.is_verified && (
+                            <Badge className="text-xs bg-emerald-100 text-emerald-700">
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          {vendor.total_sales} sales
+                        </p>
+                        <div className="mt-2 flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                          <span className="text-sm font-medium text-slate-900">
+                            {vendor.rating.toFixed(1)}
+                          </span>
+                        </div>
+                        {vendor.shop_description && (
+                          <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                            {vendor.shop_description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Products Header */}
+        {products.length > 0 && vendors.length > 0 && (
+          <h2 className="mb-6 text-2xl font-semibold">Products</h2>
+        )}
+
+        {/* Products Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {loading
             ? Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
@@ -499,10 +571,10 @@ function SearchContent() {
         </div>
 
         {/* No Results */}
-        {!loading && products.length === 0 && (
+        {!loading && products.length === 0 && vendors.length === 0 && (
           <div className="py-12 text-center">
             <Search className="mx-auto h-12 w-12 text-slate-400" />
-            <h3 className="mt-4 text-lg font-medium text-slate-900">No products found</h3>
+            <h3 className="mt-4 text-lg font-medium text-slate-900">No results found</h3>
             <p className="mt-2 text-slate-600">Try adjusting your filters or search terms.</p>
           </div>
         )}

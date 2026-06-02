@@ -1,6 +1,6 @@
 'use client';
-
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversations, useMessages } from '@/hooks/useMessages';
 import { ConversationList } from '@/components/messaging/ConversationList';
@@ -8,12 +8,24 @@ import { ChatWindow } from '@/components/messaging/ChatWindow';
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showChat, setShowChat] = useState(false);
 
   const { conversations, loading: conversationsLoading } = useConversations(user?.id);
   const { messages, loading: messagesLoading, sendMessage } = useMessages(activeConversationId, user?.id);
+
+  // Handle ?with= parameter to auto-select conversation
+  useEffect(() => {
+    const withUserId = searchParams.get('with');
+    if (withUserId) {
+      setActiveConversationId(withUserId);
+      if (isMobile) {
+        setShowChat(true);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const checkMobile = () => {

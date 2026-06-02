@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { MessageVendorButton } from '@/components/messaging/MessageVendorButton';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -352,10 +353,11 @@ export default function ProductDetailPage() {
 
           {/* Secondary Buttons */}
           <div className="flex gap-2 border-t border-slate-200 pt-4">
-            <Button variant="outline" className="flex-1">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Message Vendor
-            </Button>
+            <MessageVendorButton 
+              vendorUserId={product.vendor.id}
+              vendorName={product.vendor.shop_name}
+              className="flex-1"
+            />
             <Button variant="outline" className="flex-1">
               <Heart className="mr-2 h-4 w-4" />
               Wishlist

@@ -3,6 +3,34 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Bell, Menu, Search, ShoppingCart, X, Package, MessageSquare, Star, Settings } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
+import { useNotifications } from "@/hooks/useNotifications";
+import { CURRENCY_OPTIONS } from "@/constants";
+import { useCurrencyStore } from "@/store/currencyStore";
+import type { NotificationType } from "@/lib/notifications";
+export default function Navbar() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/marketplace/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      router.push(`/marketplace/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
+  };
+import type { ChangeEvent } from "react";
+import Link from "next/link";
 import { Bell, Menu, Search, ShoppingCart, X, Package, MessageSquare, Star, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
@@ -98,12 +126,18 @@ export function Navbar() {
             FreshDrop
           </Link>
           <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 md:flex">
-            <Search className="h-4 w-4 text-slate-500" />
-            <input
-              className="w-72 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
-              type="search"
-              placeholder="Search products, vendors..."
-            />
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 w-full">
+              <Search className="h-4 w-4 text-slate-500" />
+              <input
+                className="w-72 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                type="search"
+                placeholder="Search products, vendors..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+              />
+            </form>
+
           </div>
         </div>
 

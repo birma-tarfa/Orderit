@@ -87,6 +87,12 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
       .select('*, sender:sender_id(id,full_name,avatar_url,role), receiver:receiver_id(id,full_name,avatar_url,role), order:order_id(id)')
       .single();
     if (error || !data) throw new Error(error?.message || 'Unable to send message');
+    // Append the newly sent message locally so sender sees it immediately
+    setMessages((current) => {
+      if (!current) return [data];
+      if (current.some(msg => msg.id === data.id)) return current;
+      return [...current, data];
+    });
     return data;
   }, [currentUserId, conversationId]);
 

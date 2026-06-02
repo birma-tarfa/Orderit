@@ -1,7 +1,7 @@
 'use client';
-
 import Image from 'next/image';
-import { Star, MapPin, Calendar, Package, MessageSquare, Heart, Share2, Clock, Edit3 } from 'lucide-react';
+import { Star, MapPin, Calendar, Package, Heart, Share2, Clock, Edit3 } from 'lucide-react';
+import { MessageVendorButton } from '@/components/messaging/MessageVendorButton';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { VendorProfile } from '@/types';
@@ -16,6 +16,7 @@ interface StorefrontHeaderProps {
     created_at: string;
     is_verified: boolean;
   };
+  vendorUserId?: string;
 }
 
 interface StorefrontHeaderPropsWithOwner extends StorefrontHeaderProps {
@@ -139,10 +140,10 @@ export function StorefrontHeader({ vendor, isOwner }: StorefrontHeaderPropsWithO
               </>
             ) : (
               <>
-                <Button variant="outline">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Message Vendor
-                </Button>
+                <MessageVendorButton 
+                  vendorUserId={vendor.user_id}
+                  vendorName={vendor.shop_name}
+                />
                 <Button variant="outline">
                   <Heart className="mr-2 h-4 w-4" />
                   Follow

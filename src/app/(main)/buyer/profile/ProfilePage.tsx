@@ -1,110 +1,422 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import toast, { Toaster } from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { ImageUpload } from '@/components/ui/ImageUpload';
+import { Eye, EyeOff, Save, Loader2 } from 'lucide-react';
+import type { User } from '@/types';
 
-interface UserProfile {
-  id: string;
-  email: string;
-  full_name?: string;
-  phone?: string;
+interface UserProfile extends User {
   avatar_url?: string;
 }
 
-interface Address {
-  id: string;
-  name: string;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  is_default: boolean;
-}
-
 export default function ProfilePage() {
-  const { user: authUser, loading } = useAuth();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
+  const { user: authUser } = useAuth();
+  const supabase = createClient();
 
+  // Profile edit state
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string[]>([]);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  // Fetch current user profile
   useEffect(() => {
-    if (authUser) {
-      setUser({
-        id: authUser.id,
-        email: authUser.email || "",
-        full_name: authUser.user_metadata?.full_name,
-        phone: authUser.user_metadata?.phone,
-        avatar_url: authUser.user_metadata?.avatar_url,
-      });
-    }
+    const fetchProfile = async () => {
+      if (!authUser) return;
+      
+      try {
+        setProfileLoading(true);
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, email, full_name, phone, avatar_url, role')
+          .eq('id', authUser.id)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          setProfile(data as UserProfile);
+          setFullName(data.full_name || '');
+          setPhone(data.phone || '');
+          if (data.avatar_url) {
+            setAvatarUrl([data.avatar_url]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setProfileError('Failed to load profile');
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, [authUser]);
 
-  if (loading) {
-    return <div className="p-8">Loading...</div>;
+  // Save profile changes
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(false);
+
+    if (!authUser || !profile) return;
+
+    try {
+      setProfileSaving(true);
+
+      // Update public.users table
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          full_name: fullName || null,
+          phone: phone || null,
+          avatar_url: avatarUrl[0] || null,
+        })
+        .eq('id', authUser.id);
+
+      if (updateError) throw updateError;
+
+      setProfileSuccess(true);
+      toast.success('Profile updated successfully!');
+      setTimeout(() => setProfileSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to save profile';
+      setProfileError(msg);
+      toast.error(msg);
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  // Change password
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (!authUser) return;
+
+    // Validate form
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All password fields are required');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+
+      // Update password in Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordSuccess(true);
+      toast.success('Password changed successfully!');
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error changing password:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to change password';
+      setPasswordError(msg);
+      toast.error(msg);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  if (profileLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user) {
-    return <div className="p-8">Please log in to view your profile</div>;
+  if (!authUser || !profile) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Please log in to view your profile</p>
+          <Button onClick={() => router.push('/login')}>Login</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold">My Profile</h1>
-          </div>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <Toaster position="top-right" />
+      <div className="mx-auto max-w-2xl px-4">
+        <h1 className="mb-8 text-3xl font-bold text-slate-900">My Profile</h1>
 
-          <div className="px-6 py-6 space-y-6">
-            {/* Profile Information */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Personal Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Full Name
-                  </label>
-                  <p className="mt-1 text-gray-900">{user.full_name || "Not set"}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <p className="mt-1 text-gray-900">{user.email}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Phone
-                  </label>
-                  <p className="mt-1 text-gray-900">{user.phone || "Not set"}</p>
-                </div>
+        {/* Profile Information */}
+        <form onSubmit={handleSaveProfile} className="space-y-8">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">Personal Information</h2>
+            </div>
+
+            {profileError && (
+              <div className="mb-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+                {profileError}
+              </div>
+            )}
+
+            {profileSuccess && (
+              <div className="mb-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-700 border border-emerald-200">
+                Profile updated successfully!
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* Avatar Upload */}
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">
+                  Profile Picture
+                </label>
+                <ImageUpload
+                  value={avatarUrl}
+                  onChange={setAvatarUrl}
+                  maxImages={1}
+                  pathPrefix="avatars/"
+                />
+              </div>
+
+              {/* Full Name */}
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-slate-900 mb-2">
+                  Full Name
+                </label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-900 mb-2">
+                  Phone Number
+                </label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Enter your phone number"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Email (read-only) */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-900 mb-2">
+                  Email Address
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profile.email}
+                  disabled
+                  className="w-full bg-slate-50"
+                />
+                <p className="mt-1 text-xs text-slate-500">Email cannot be changed here</p>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {profileSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
+          </div>
+        </form>
 
-            {/* Addresses */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Saved Addresses</h2>
-              {addresses.length === 0 ? (
-                <p className="text-gray-500">No addresses saved yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {addresses.map((address) => (
-                    <div
-                      key={address.id}
-                      className="p-3 border border-gray-200 rounded"
-                    >
-                      <p className="font-medium">{address.name}</p>
-                      <p className="text-sm text-gray-600">
-                        {address.street}, {address.city}, {address.state}
-                      </p>
-                      <p className="text-sm text-gray-600">{address.phone}</p>
-                    </div>
-                  ))}
+        {/* Change Password */}
+        <form onSubmit={handleChangePassword} className="space-y-8">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-6 text-xl font-semibold text-slate-900">Change Password</h2>
+
+            {passwordError && (
+              <div className="mb-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="mb-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-700 border border-emerald-200">
+                Password changed successfully!
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* Current Password */}
+              <div>
+                <label htmlFor="currentPassword" className="block text-sm font-medium text-slate-900 mb-2">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter your current password"
+                    className="w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                  >
+                    {showCurrentPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-              )}
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label htmlFor="newPassword" className="block text-sm font-medium text-slate-900 mb-2">
+                  New Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter your new password"
+                    className="w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm New Password */}
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-900 mb-2">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your new password"
+                    className="w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Update Button */}
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {passwordLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Change Password
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

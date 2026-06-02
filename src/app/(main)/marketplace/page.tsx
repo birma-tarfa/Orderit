@@ -1,10 +1,13 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+'use client';
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProductCard } from "@/components/product/ProductCard";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { ProductCardSkeleton, VendorCardSkeleton, CategoryCardSkeleton } from "@/components/skeletons";
-import Link from "next/link";
-import { Search } from "lucide-react";
 
 async function getFeaturedProducts() {
   const supabase = createSupabaseServerClient();
@@ -59,13 +62,39 @@ async function getCategories() {
   return data ?? [];
 }
 
-export default async function MarketplacePage() {
-  const [featuredProducts, topVendors, recentProducts, categories] = await Promise.all([
-    getFeaturedProducts(),
-    getTopVendors(),
-    getRecentProducts(),
-    getCategories(),
-  ]);
+export default function MarketplacePage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [topVendors, setTopVendors] = useState([]);
+  const [recentProducts, setRecentProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useState(() => {
+    const loadData = async () => {
+      const [featured, vendors, recent, cats] = await Promise.all([
+        getFeaturedProducts(),
+        getTopVendors(),
+        getRecentProducts(),
+        getCategories(),
+      ]);
+      setFeaturedProducts(featured);
+      setTopVendors(vendors);
+      setRecentProducts(recent);
+      setCategories(cats);
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/marketplace/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <div className="space-y-12">
@@ -81,15 +110,17 @@ export default async function MarketplacePage() {
             </p>
           </div>
           <div className="mx-auto max-w-2xl space-y-6">
-            <div className="flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
               <Search className="h-5 w-5 text-emerald-200" />
               <input
                 className="flex-1 bg-transparent text-white placeholder:text-emerald-200 focus:outline-none"
                 type="search"
                 placeholder="Search meals, restaurants, cuisines..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Button className="bg-emerald-600 hover:bg-emerald-700">Search</Button>
-            </div>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">Search</Button>
+            </form>
             <div className="flex flex-wrap justify-center gap-3">
               {["Rice & Swallow", "Grills & BBQ", "Soups & Stews", "Snacks & Small Chops", "Drinks"].map((category) => (
                 <Link

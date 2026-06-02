@@ -54,18 +54,39 @@ export async function GET(request: NextRequest) {
 
     // Group messages by conversation
     const conversationMap = new Map<string, any>();
+    const partnersToFetch = new Set<string>();
+
+    // First pass: identify all unique partners
+    messages?.forEach((message: any) => {
+      const otherUserId = message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
+      partnersToFetch.add(otherUserId);
+    });
+
+    // Fetch all partner information
+    const partnerInfo = new Map<string, any>();
+    if (partnersToFetch.size > 0) {
+      // Get partner user data
+      const { data: partners } = await supabaseAdminClient
+        .from('users')
+        .select('id, full_name, avatar_url, role, vendor_profiles(user_id, shop_name, logo_url)')
+        .in('id', Array.from(partnersToFetch));
+
+      partners?.forEach((partner: any) => {
+        partnerInfo.set(partner.id, partner);
+      });
+    }
 
     messages?.forEach((message: any) => {
       const otherUserId = message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
-      const otherUser = message.sender_id === currentUserId ? message.receiver : message.sender;
+      const otherUser = partnerInfo.get(otherUserId) || (message.sender_id === currentUserId ? message.receiver : message.sender);
 
       if (!conversationMap.has(otherUserId)) {
         const displayName = otherUser?.role === 'vendor'
-          ? (otherUser.vendor_profiles?.[0]?.shop_name || otherUser.full_name || 'Unknown Vendor')
+          ? (otherUser?.vendor_profiles?.[0]?.shop_name || otherUser?.full_name || 'Unknown Vendor')
           : (otherUser?.full_name || 'Unknown User');
 
         const avatarUrl = otherUser?.role === 'vendor'
-          ? otherUser.vendor_profiles?.[0]?.logo_url
+          ? otherUser?.vendor_profiles?.[0]?.logo_url
           : otherUser?.avatar_url;
 
         conversationMap.set(otherUserId, {

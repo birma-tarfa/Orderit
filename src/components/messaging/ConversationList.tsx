@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import type { ConversationPreview } from "@/types";
 
 interface ConversationListProps {
@@ -9,10 +10,24 @@ interface ConversationListProps {
 }
 
 function formatTime(timestamp: string) {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d ago`;
+
+  return date.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
   });
+}
+
+function truncateMessage(message: string, maxLength: number = 50): string {
+  if (message.length <= maxLength) return message;
+  return message.substring(0, maxLength) + '...';
 }
 
 export function ConversationList({ conversations, activeConversationId, loading, onSelect }: ConversationListProps) {
@@ -49,6 +64,7 @@ export function ConversationList({ conversations, activeConversationId, loading,
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                  <div className="relative">
                   {conversation.avatarUrl ? (
                     <img src={conversation.avatarUrl} alt={conversation.displayName} className="h-12 w-12 rounded-2xl object-cover" />
                   ) : (
@@ -58,13 +74,16 @@ export function ConversationList({ conversations, activeConversationId, loading,
                       .slice(0, 2)
                       .join("")
                   )}
+                    {/* Online indicator */}
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
+                  </div>
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold text-slate-900">{conversation.displayName}</p>
-                    <span className="text-xs text-slate-500">{formatTime(conversation.lastMessageAt)}</span>
+                    <span className="flex-shrink-0 text-xs text-slate-500">{formatTime(conversation.lastMessageAt)}</span>
                   </div>
-                  <p className="truncate text-sm text-slate-600">{conversation.lastMessage}</p>
+                  <p className="truncate text-sm text-slate-600">{truncateMessage(conversation.lastMessage)}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
