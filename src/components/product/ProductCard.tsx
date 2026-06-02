@@ -50,6 +50,12 @@ export function ProductCard({ product }: ProductCardProps) {
         <h3 className="line-clamp-2 text-lg font-semibold text-slate-900">{product.name}</h3>
         <p className="text-sm text-slate-600">by {product.vendor.full_name}</p>
 
+        {product.category && (
+          <div className="mt-1">
+            <span className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">{(product as any).category.name}</span>
+          </div>
+        )}
+
         <RatingSummary
           rating={product.rating}
           reviewCount={product.review_count}

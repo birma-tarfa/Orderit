@@ -15,13 +15,25 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Resolve vendor profile for current user
+  const { data: vp, error: vpError } = await supabase
+    .from("vendor_profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (vpError || !vp) return NextResponse.json({ error: "Vendor profile not found" }, { status: 404 });
+
+  const vendorProfileId = vp.id;
+
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .select("id,buyer_id,vendor_id,status")
     .eq("id", params.id)
+    .eq("vendor_id", vendorProfileId)
     .single();
 
-  if (orderError || !order || order.vendor_id !== userId) {
+  if (orderError || !order) {
     return NextResponse.json({ error: "Order not found or access denied" }, { status: 404 });
   }
 

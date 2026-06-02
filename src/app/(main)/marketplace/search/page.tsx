@@ -88,6 +88,26 @@ function SearchContent() {
     fetchCategories();
   }, []);
 
+  // If URL provided category names (from homepage links), map them to IDs once categories load
+  useEffect(() => {
+    if (categories.length === 0) return;
+    if (!filters.category || filters.category.length === 0) return;
+
+    const needsMapping = filters.category.some((c) => !c.includes('-'));
+    if (!needsMapping) return;
+
+    const mapped = filters.category.map((c) => {
+      const found = categories.find((cat) => cat.name === c);
+      return found ? found.id : c;
+    }).filter(Boolean);
+
+    if (JSON.stringify(mapped) !== JSON.stringify(filters.category)) {
+      const newFilters = { ...filters, category: mapped };
+      setFilters(newFilters);
+      updateURL(newFilters);
+    }
+  }, [categories]);
+
   // Fetch products based on filters
   useEffect(() => {
     const fetchProducts = async () => {
@@ -96,7 +116,7 @@ function SearchContent() {
       let query = supabase
         .from('products')
         .select(`
-          *
+          *, vendor:vendor_profiles(shop_name, logo_url), category:categories(id,name)
         `, { count: 'exact' })
         .eq('is_active', true);
 
@@ -161,24 +181,16 @@ function SearchContent() {
       } else {
         // Fetch vendor details for all products
         if (data && data.length > 0) {
-          const vendorIds = [...new Set(data.map(p => p.vendor_id))];
-          const { data: vendors } = await supabase
-            .from('users')
-            .select('id,full_name')
-            .in('id', vendorIds);
-
-          const vendorsById = (vendors || []).reduce((acc: any, v: any) => {
-            acc[v.id] = v;
-            return acc;
-          }, {});
-
-          // Apply state filter based on vendor location (if needed)
-          let filtered = data.map((p: any) => ({
-            ...p,
-            vendor: vendorsById[p.vendor_id] || { full_name: 'Unknown' },
-          }));
-
-          setProducts(filtered);
+          // The select includes vendor:vendor_profiles and category relation. Normalize vendor.full_name
+          const normalized = data.map((p: any) => {
+            const vendor = p.vendor || {};
+            const vendorName = vendor.shop_name || vendor.full_name || 'Unknown';
+            return {
+              ...p,
+              vendor: { full_name: vendorName, logo_url: vendor.logo_url },
+            };
+          });
+          setProducts(normalized);
         } else {
           setProducts([]);
         }

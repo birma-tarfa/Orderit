@@ -129,7 +129,7 @@ export default function EditVendorProductPage() {
         is_active: product.is_active ?? true,
         preparation_time: product.preparation_time?.toString() ?? "20",
         spice_level: spiceOptions.find((option) => option.label === product.spice_level)?.value ?? "medium",
-        dietary_tags,
+        dietary_tags: dietaryTags,
       });
       setImageUrls(product.images || []);
 

@@ -71,7 +71,7 @@ async function getBuyerStats(userId: string): Promise<BuyerStats> {
 
   const totalOrders = orders?.length || 0;
   const totalSpent = orders?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-  const pendingOrders = orders?.filter(order => ["pending", "confirmed", "shipped"].includes(order.status)).length || 0;
+  const pendingOrders = orders?.filter(order => ["pending", "confirmed", "shipped", "out_for_delivery"].includes(order.status)).length || 0;
   const deliveredOrders = orders?.filter(order => order.status === "delivered").length || 0;
 
   return { totalOrders, totalSpent, pendingOrders, deliveredOrders };

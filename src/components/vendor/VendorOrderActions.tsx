@@ -32,6 +32,8 @@ export function VendorOrderActions({ orderId, status, buyerId }: VendorOrderActi
         throw new Error(payload.error || "Unable to update order status");
       }
 
+      // show simple success toast/alert and refresh data
+      try { window.alert("Order updated successfully"); } catch (e) {}
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed");
@@ -42,10 +44,14 @@ export function VendorOrderActions({ orderId, status, buyerId }: VendorOrderActi
 
   const confirmOrder = () => executeAction(`/api/vendor/orders/${orderId}/confirm`);
 
+  const markPreparing = () => {
+    executeAction(`/api/vendor/orders/${orderId}/ship`, { status: "preparing" });
+  };
+
   const shipOrder = () => {
     const trackingNumber = window.prompt("Enter tracking number:", "");
     if (!trackingNumber) return;
-    executeAction(`/api/vendor/orders/${orderId}/ship`, { tracking_number: trackingNumber });
+    executeAction(`/api/vendor/orders/${orderId}/ship`, { status: "out_for_delivery", tracking_number: trackingNumber });
   };
 
   const deliverOrder = () => executeAction(`/api/vendor/orders/${orderId}/deliver`);
@@ -66,11 +72,16 @@ export function VendorOrderActions({ orderId, status, buyerId }: VendorOrderActi
           </Button>
         )}
         {status === "confirmed" && (
-          <Button onClick={shipOrder} disabled={loading} className="rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-700">
-            <Truck className="mr-2 h-4 w-4" /> Mark as Shipped
+          <Button onClick={markPreparing} disabled={loading} className="rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-700">
+            <Truck className="mr-2 h-4 w-4" /> Mark as Preparing
           </Button>
         )}
-        {status === "shipped" && (
+        {status === "preparing" && (
+          <Button onClick={shipOrder} disabled={loading} className="rounded-full bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700">
+            <Truck className="mr-2 h-4 w-4" /> Out for Delivery
+          </Button>
+        )}
+        {status === "out_for_delivery" && (
           <Button onClick={deliverOrder} disabled={loading} className="rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
             <ShieldCheck className="mr-2 h-4 w-4" /> Mark as Delivered
           </Button>

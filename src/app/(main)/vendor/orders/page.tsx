@@ -28,14 +28,14 @@ const statusFilterMap: Record<string, string[] | null> = {
   all: null,
   pending: ["pending"],
   confirmed: ["confirmed"],
-  preparing: [],
-  out_for_delivery: ["shipped"],
+  preparing: ["preparing"],
+  out_for_delivery: ["out_for_delivery"],
   delivered: ["delivered"],
   cancelled: ["cancelled"],
 };
 
 const getStatusLabel = (status: string) => {
-  if (status === "shipped") return "Out for Delivery";
+  if (status === "shipped" || status === "out_for_delivery") return "Out for Delivery";
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
@@ -43,6 +43,7 @@ const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
   confirmed: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
+  out_for_delivery: "bg-purple-100 text-purple-800",
   delivered: "bg-emerald-100 text-emerald-800",
   cancelled: "bg-rose-100 text-rose-800",
 };
@@ -75,7 +76,19 @@ export default function VendorOrdersPage() {
       return;
     }
 
-    const vendorId = user.id;
+    // Fetch vendor profile id for this user
+    const { data: vp, error: vpError } = await supabase
+      .from("vendor_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (vpError || !vp) {
+      router.push("/marketplace");
+      return;
+    }
+
+    const vendorId = vp.id;
 
     const { data, error: ordersError } = await supabase
       .from("orders")
@@ -133,10 +146,14 @@ export default function VendorOrdersPage() {
   const performOrderAction = async (orderId: string, action: "confirm" | "ship" | "deliver" | "cancel") => {
     try {
       setLoading(true);
-      const resp = await fetch(`/api/vendor/orders/${orderId}/${action}`, {
-        method: "POST",
-        credentials: "same-origin",
-      });
+      const options: any = { method: "POST", credentials: "same-origin" };
+      if (action === "ship") {
+        // default to preparing from list view
+        options.headers = { "Content-Type": "application/json" };
+        options.body = JSON.stringify({ status: "preparing" });
+      }
+
+      const resp = await fetch(`/api/vendor/orders/${orderId}/${action}`, options);
 
       if (!resp.ok) {
         const payload = await resp.json().catch(() => ({}));
@@ -260,10 +277,10 @@ export default function VendorOrdersPage() {
                         onClick={() => performOrderAction(order.id, "ship")}
                         className="rounded-full bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-700"
                       >
-                        Ship
+                        Mark as Preparing
                       </button>
                     )}
-                    {order.status === "shipped" && (
+                                    {(order.status === "out_for_delivery" || order.status === "shipped") && (
                       <button
                         type="button"
                         onClick={() => performOrderAction(order.id, "deliver")}

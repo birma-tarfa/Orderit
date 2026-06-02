@@ -1,17 +1,20 @@
 interface OrderTimelineProps {
-  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  status: "pending" | "confirmed" | "preparing" | "out_for_delivery" | "shipped" | "delivered" | "cancelled";
 }
 
 const steps = [
   { key: "pending", label: "Pending" },
   { key: "confirmed", label: "Confirmed" },
-  { key: "shipped", label: "Shipped" },
+  { key: "preparing", label: "Preparing" },
+  { key: "out_for_delivery", label: "Out for Delivery" },
   { key: "delivered", label: "Delivered" },
 ];
 
 function isComplete(step: string, status: string) {
-  const order = ["pending", "confirmed", "shipped", "delivered"];
-  return order.indexOf(step) <= order.indexOf(status);
+  const order = ["pending", "confirmed", "preparing", "out_for_delivery", "delivered"];
+  // If code elsewhere still uses 'shipped', treat it as 'out_for_delivery' for ordering
+  const normalizedStatus = status === "shipped" ? "out_for_delivery" : status;
+  return order.indexOf(step) <= order.indexOf(normalizedStatus);
 }
 
 export function OrderTimeline({ status }: OrderTimelineProps) {

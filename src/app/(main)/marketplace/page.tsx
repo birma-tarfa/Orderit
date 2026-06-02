@@ -10,12 +10,16 @@ async function getFeaturedProducts() {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("products")
-    .select(`*, vendor:vendor_profiles(shop_name, logo_url)`)
+    .select(`*, vendor:vendor_profiles(shop_name, logo_url), category:categories(id,name)`)
     .eq("is_active", true)
     .order("rating", { ascending: false })
     .limit(10);
   if (error) console.error("featuredProducts error:", error);
-  return data ?? [];
+  // normalize vendor name
+  return (data || []).map((p: any) => ({
+    ...p,
+    vendor: { full_name: p.vendor?.shop_name || p.vendor?.full_name || 'Unknown', logo_url: p.vendor?.logo_url },
+  }));
 }
 
 async function getTopVendors() {
@@ -34,12 +38,15 @@ async function getRecentProducts() {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("products")
-    .select(`*, vendor:vendor_profiles(shop_name, logo_url)`)
+    .select(`*, vendor:vendor_profiles(shop_name, logo_url), category:categories(id,name)`)
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(8);
   if (error) console.error("recentProducts error:", error);
-  return data ?? [];
+  return (data || []).map((p: any) => ({
+    ...p,
+    vendor: { full_name: p.vendor?.shop_name || p.vendor?.full_name || 'Unknown', logo_url: p.vendor?.logo_url },
+  }));
 }
 
 async function getCategories() {

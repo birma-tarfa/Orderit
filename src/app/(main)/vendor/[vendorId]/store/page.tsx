@@ -118,14 +118,29 @@ async function getVendorData(vendorId: string) {
   } as VendorWithStats;
 }
 
-async function getVendorProducts(vendorId: string, search?: string, categoryId?: string, includeInactive = false) {
+async function getVendorProducts(vendorId: string, search?: string, categoryFilter?: string, includeInactive = false) {
   const supabase = createSupabaseServerClient();
+
+  // If categoryFilter provided and is a name, resolve to id
+  let categoryId: string | undefined = undefined;
+  if (categoryFilter) {
+    // crude check: UUID contains dashes
+    if (categoryFilter.includes('-')) {
+      categoryId = categoryFilter;
+    } else {
+      const { data: cat } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('name', categoryFilter)
+        .single();
+      if (cat) categoryId = cat.id;
+    }
+  }
 
   let query = supabase
     .from('products')
-    .select('*')
-    .eq('vendor_id', vendorId)
-    ;
+    .select('*, category:categories(id,name)')
+    .eq('vendor_id', vendorId);
 
   if (!includeInactive) {
     query = query.eq('is_active', true);
@@ -139,31 +154,11 @@ async function getVendorProducts(vendorId: string, search?: string, categoryId?:
     query = query.eq('category_id', categoryId);
   }
 
-  const { data: products } = await query
-    .order('created_at', { ascending: false });
+  const { data: products } = await query.order('created_at', { ascending: false });
 
   if (!products || products.length === 0) return [];
 
-  // Batch fetch categories
-  const categoryIds = [...new Set(products.map(p => p.category_id).filter(Boolean))];
-  const { data: categories } = categoryIds.length
-    ? await supabase
-        .from('categories')
-        .select('id,name')
-        .in('id', categoryIds)
-    : { data: [] };
-
-  const categoriesById = (categories || []).reduce((acc: any, c: any) => {
-    acc[c.id] = c;
-    return acc;
-  }, {});
-
-  const productsWithCategories = products.map((p: any) => ({
-    ...p,
-    category: categoriesById[p.category_id],
-  }));
-
-  return productsWithCategories as ProductWithCategory[] || [];
+  return products as ProductWithCategory[] || [];
 }
 
 async function getVendorCategories(vendorId: string) {
@@ -208,6 +203,12 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
 
   const products = await getVendorProducts(params.vendorId, undefined, undefined, isOwner);
   const categories = await getVendorCategories(params.vendorId);
+
+  // Ensure products have vendor name for ProductCard
+  const productsWithVendor = products.map((p: any) => ({
+    ...p,
+    vendor: { full_name: vendor.shop_name },
+  }));
 
   return (
     <div className="space-y-8">
@@ -277,7 +278,7 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
             <div>
               {/* Client-side product grid and owner controls */}
               {/* @ts-expect-error Server component passing JSON */}
-              <ClientSideProductGrid vendorId={params.vendorId} products={products} isOwner={isOwner} vendorName={vendor.shop_name} />
+              <ClientSideProductGrid vendorId={params.vendorId} products={productsWithVendor} isOwner={isOwner} vendorName={vendor.shop_name} categories={categories} />
             </div>
           )}
         </div>

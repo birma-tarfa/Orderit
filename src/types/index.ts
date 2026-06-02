@@ -67,7 +67,7 @@ export interface Order {
   id: string;
   buyer_id: string;
   vendor_id: string;
-  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  status: "pending" | "confirmed" | "preparing" | "out_for_delivery" | "shipped" | "delivered" | "cancelled";
   subtotal: number;
   delivery_fee: number;
   total: number;

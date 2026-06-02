@@ -9,11 +9,10 @@ interface Order {
   payment_status: string;
   created_at: string;
   vendor: {
-    id: string;
-    full_name?: string;
-    email: string;
+    shop_name?: string;
+    logo_url?: string;
   };
-  orderItems: {
+  order_items: {
     product_name: string;
     product_image?: string;
   }[];
@@ -46,7 +45,11 @@ async function getOrders(userId: string): Promise<Order[]> {
 
   const { data: orders, error } = await supabase
     .from("orders")
-    .select(`id,total,status,payment_status,created_at,vendor_id`)
+    .select(`
+      *,
+      vendor:vendor_profiles(shop_name, logo_url),
+      order_items(id, product_name, quantity, price_at_purchase, product_image)
+    `)
     .eq("buyer_id", userId)
     .order("created_at", { ascending: false });
 
@@ -55,50 +58,7 @@ async function getOrders(userId: string): Promise<Order[]> {
     return [];
   }
 
-  const orderList = orders || [];
-  const vendorIds = Array.from(new Set(orderList.map((o: any) => o.vendor_id).filter(Boolean)));
-  const orderIds = orderList.map((o: any) => o.id);
-
-  const { data: vendors } = vendorIds.length
-    ? await supabase.from("users").select("id,full_name,email").in("id", vendorIds)
-    : { data: [] };
-  const { data: items } = orderIds.length
-    ? await supabase.from("order_items").select("order_id,product_name,product_image").in("order_id", orderIds)
-    : { data: [] };
-  const { data: vendorProfiles } = vendorIds.length
-    ? await supabase.from("vendor_profiles").select("user_id,shop_name").in("user_id", vendorIds)
-    : { data: [] };
-
-  const itemsByOrder: Record<string, any[]> = (items || []).reduce((acc: any, it: any) => {
-    acc[it.order_id] = acc[it.order_id] || [];
-    acc[it.order_id].push({ product_name: it.product_name, product_image: it.product_image });
-    return acc;
-  }, {});
-
-  const vendorsById: Record<string, any> = (vendors || []).reduce((acc: any, v: any) => {
-    acc[v.id] = v;
-    return acc;
-  }, {});
-
-  const profilesByUserId: Record<string, any> = (vendorProfiles || []).reduce((acc: any, p: any) => {
-    acc[p.user_id] = p;
-    return acc;
-  }, {});
-
-  return (
-    orderList.map((o: any) => ({
-      id: o.id,
-      total: o.total,
-      status: o.status,
-      payment_status: o.payment_status,
-      created_at: o.created_at,
-      vendor: {
-        ...(vendorsById[o.vendor_id] || { id: o.vendor_id }),
-        shop_name: profilesByUserId[o.vendor_id]?.shop_name,
-      },
-      orderItems: itemsByOrder[o.id] || [],
-    })) as Order[]
-  );
+  return (orders || []) as Order[];
 }
 
 export default async function OrdersPageWrapper() {
@@ -112,7 +72,7 @@ function getStatusClass(status: string) {
   switch (status) {
     case "delivered":
       return "bg-emerald-100 text-emerald-800";
-    case "shipped":
+    case "out_for_delivery":
       return "bg-blue-100 text-blue-800";
     case "confirmed":
       return "bg-amber-100 text-amber-800";
@@ -162,8 +122,8 @@ function BuyerOrdersPage({ orders }: { orders: Order[] }) {
               {orders.map((order) => (
                 <tr key={order.id} className="border-t border-slate-200 hover:bg-slate-50">
                   <td className="px-4 py-4 text-slate-900">#{order.id.slice(0, 8)}</td>
-                  <td className="px-4 py-4 text-slate-900">{order.vendor.full_name || order.vendor.shop_name || order.vendor.email}</td>
-                  <td className="px-4 py-4 text-slate-900">{order.orderItems.length}</td>
+                  <td className="px-4 py-4 text-slate-900">{order.vendor?.shop_name || 'Unknown Vendor'}</td>
+                  <td className="px-4 py-4 text-slate-900">{order.order_items?.length || 0}</td>
                   <td className="px-4 py-4 text-slate-900">₦{Number(order.total).toLocaleString()}</td>
                   <td className="px-4 py-4">
                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(order.status)}`}>

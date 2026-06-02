@@ -40,17 +40,7 @@ export function StorefrontHeader({ vendor, isOwner }: StorefrontHeaderPropsWithO
             <Package className="h-24 w-24 text-white" />
           </div>
         )}
-        {/* Owner edit overlay: link to settings branding */}
-        {isOwner ? (
-          <a
-            href="/vendor/settings#branding"
-            className="absolute right-4 top-4 hidden items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-sm text-slate-700 shadow hover:bg-white md:flex"
-            title="Edit banner"
-          >
-            <Edit3 className="h-4 w-4" />
-            Edit
-          </a>
-        ) : null}
+        {/* no floating owner overlay to avoid overlapping badge */}
         {vendor.is_verified && (
           <Badge className="absolute right-6 top-6 bg-blue-100 text-blue-800">
             Open Now
@@ -129,20 +119,41 @@ export function StorefrontHeader({ vendor, isOwner }: StorefrontHeaderPropsWithO
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline">
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Message Vendor
-          </Button>
-          <Button variant="outline">
-            <Heart className="mr-2 h-4 w-4" />
-            Follow
-          </Button>
-          <Button variant="outline">
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
+        {/* Action Buttons: if owner show Edit/Add, else show Message/Follow. Share always visible */}
+        <div className="flex flex-col items-center gap-3 md:flex-row md:items-center md:gap-3">
+          <div className="flex flex-wrap gap-3">
+            {isOwner ? (
+              <>
+                <a href="/vendor/settings" className="">
+                  <Button>
+                    <Edit3 className="mr-2 h-4 w-4" />
+                    Edit Store
+                  </Button>
+                </a>
+                <a href="/vendor/products/new">
+                  <Button>
+                    <Package className="mr-2 h-4 w-4" />
+                    Add Product
+                  </Button>
+                </a>
+              </>
+            ) : (
+              <>
+                <Button variant="outline">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Message Vendor
+                </Button>
+                <Button variant="outline">
+                  <Heart className="mr-2 h-4 w-4" />
+                  Follow
+                </Button>
+              </>
+            )}
+            <Button variant="outline">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+          </div>
         </div>
       </div>
     </div>

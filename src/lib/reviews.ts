@@ -49,7 +49,7 @@ export async function validateBuyerPurchased(buyerId: string, productId: string)
     .select('id, status, order_items!inner(product_id)')
     .eq('buyer_id', buyerId)
     .eq('order_items.product_id', productId)
-    .in('status', ['delivered', 'shipped']) // Allow reviewing shipped or delivered items
+    .in('status', ['delivered', 'shipped', 'out_for_delivery']) // Allow reviewing shipped/out_for_delivery or delivered items
     .limit(1);
 
   if (error) {

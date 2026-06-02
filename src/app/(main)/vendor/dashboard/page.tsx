@@ -129,6 +129,7 @@ export default function VendorDashboardPage() {
       case "confirmed":
         return "bg-blue-200 text-blue-800";
       case "shipped":
+      case "out_for_delivery":
         return "bg-purple-200 text-purple-800";
       case "delivered":
         return "bg-green-200 text-green-800";

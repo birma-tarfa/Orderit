@@ -33,6 +33,8 @@ const statusLabels: Record<string, string> = {
   pending: "Pending",
   confirmed: "Confirmed",
   shipped: "Out for Delivery",
+  out_for_delivery: "Out for Delivery",
+  preparing: "Preparing",
   delivered: "Delivered",
   cancelled: "Cancelled",
 };
@@ -41,6 +43,8 @@ const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
   confirmed: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
+  out_for_delivery: "bg-purple-100 text-purple-800",
+  preparing: "bg-slate-100 text-slate-800",
   delivered: "bg-emerald-100 text-emerald-800",
   cancelled: "bg-rose-100 text-rose-800",
 };
@@ -79,7 +83,19 @@ export default function VendorOrderDetailPage() {
         return;
       }
 
-      const vendorId = user.id;
+      // Resolve vendor profile id for this user
+      const { data: vp, error: vpError } = await supabase
+        .from("vendor_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (vpError || !vp) {
+        router.push("/marketplace");
+        return;
+      }
+
+      const vendorId = vp.id;
 
       const { data, error: orderError } = await supabase
         .from("orders")
