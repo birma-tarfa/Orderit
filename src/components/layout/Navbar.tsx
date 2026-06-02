@@ -12,33 +12,6 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { CURRENCY_OPTIONS } from "@/constants";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { NotificationType } from "@/lib/notifications";
-export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const router = useRouter();
-  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/marketplace/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-    }
-  };
-
-  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      router.push(`/marketplace/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-    }
-  };
-import type { ChangeEvent } from "react";
-import Link from "next/link";
-import { Bell, Menu, Search, ShoppingCart, X, Package, MessageSquare, Star, Settings } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useAuthStore } from "@/store/authStore";
-import { useCartStore } from "@/store/cartStore";
-import { useNotifications } from "@/hooks/useNotifications";
-import { CURRENCY_OPTIONS } from "@/constants";
-import { useCurrencyStore } from "@/store/currencyStore";
-import type { NotificationType } from "@/lib/notifications";
 
 function formatTimeAgo(date: string) {
   const now = new Date();
@@ -104,10 +77,22 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [categoriesOpen, profileOpen, notificationsOpen]);
 
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+
   const handleCurrencyChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const selectedCurrency = event.target.value;
     setCurrency(selectedCurrency);
     window.localStorage.setItem("currency", selectedCurrency);
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (query) {
+      router.push(`/marketplace/search?q=${encodeURIComponent(query)}`);
+      setSearchQuery('');
+    }
   };
 
   const handleNotificationClick = async (notificationId: string, link?: string) => {
@@ -134,7 +119,6 @@ export function Navbar() {
                 placeholder="Search products, vendors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleSearchKeyPress}
               />
             </form>
 
