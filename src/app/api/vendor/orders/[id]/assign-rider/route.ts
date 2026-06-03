@@ -20,10 +20,31 @@ export async function POST(request: Request, { params }: { params: { id: string 
     if (name) updates.dispatch_rider_name = name;
     if (phone) updates.dispatch_rider_phone = phone;
 
-    const { error } = await supabase.from("orders").update(updates).eq("id", params.id).eq("vendor_id", vp.id);
-    if (error) return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
+    const { data: updatedOrder, error } = await supabase
+      .from("orders")
+      .update(updates)
+      .eq("id", params.id)
+      .eq("vendor_id", vp.id)
+      .select("id,buyer_id,dispatch_rider_name,dispatch_rider_phone")
+      .single();
 
-    return NextResponse.json({ success: true });
+    if (error || !updatedOrder) return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
+
+    // Insert notification to buyer
+    try {
+      await supabase.from("notifications").insert({
+        user_id: updatedOrder.buyer_id,
+        title: "Dispatch Rider Assigned",
+        body: `Your order is being delivered by ${updatedOrder.dispatch_rider_name || name}. Contact: ${updatedOrder.dispatch_rider_phone || phone}`,
+        type: "order",
+        is_read: false,
+        link: `/buyer/orders/${updatedOrder.id}`
+      });
+    } catch (notifErr) {
+      console.error("Failed to insert notification:", notifErr);
+    }
+
+    return NextResponse.json({ success: true, rider: { name: updatedOrder.dispatch_rider_name, phone: updatedOrder.dispatch_rider_phone } });
   } catch (err) {
     console.error("assign-rider error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

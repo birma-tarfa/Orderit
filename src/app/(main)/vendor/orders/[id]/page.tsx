@@ -286,7 +286,12 @@ export default function VendorOrderDetailPage() {
             <h2 className="text-lg font-semibold text-slate-900">Order actions</h2>
             <p className="mt-2 text-sm text-slate-600">Update this order as it progresses through your kitchen and delivery.</p>
             <div className="mt-6">
-              <VendorOrderActions orderId={order.id} status={order.status} buyerId={order.buyer_id} />
+              <VendorOrderActions
+                orderId={order.id}
+                status={order.status}
+                buyerId={order.buyer_id}
+                onStatusChange={(newStatus) => setOrder({ ...order, status: newStatus })}
+              />
             </div>
           </section>
 

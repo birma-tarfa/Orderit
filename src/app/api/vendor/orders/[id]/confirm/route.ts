@@ -37,15 +37,25 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Order not found or access denied" }, { status: 404 });
   }
 
+  console.log("confirm order:", { orderId: params.id, vendorProfileId, order });
+
   if (order.status !== "pending") {
     return NextResponse.json({ error: "Only pending orders can be confirmed" }, { status: 400 });
   }
 
-  const { error } = await supabase.from("orders").update({ status: "confirmed" }).eq("id", params.id);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Ensure update is constrained to both id and vendor_id for safety
+  const { data: updated, error: updateError } = await supabase
+    .from("orders")
+    .update({ status: "confirmed" })
+    .eq("id", params.id)
+    .eq("vendor_id", vendorProfileId)
+    .select("id,status")
+    .single();
+
+  if (updateError || !updated) {
+    return NextResponse.json({ error: updateError?.message || "Failed to update order" }, { status: 500 });
   }
 
   await createOrderNotification(order.buyer_id, "Order confirmed", `Your order ${order.id.slice(0, 8)} has been confirmed.`, order.id);
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, status: updated.status });
 }

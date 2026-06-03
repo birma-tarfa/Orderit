@@ -9,7 +9,7 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
 
   const { data: order, error } = await supabase
     .from("orders")
-    .select(`id, buyer_id, vendor_id, status, subtotal, delivery_fee, total, payment_method, payment_status, delivery_address, created_at, delivery_code`)
+    .select(`id, buyer_id, vendor_id, status, subtotal, delivery_fee, total, payment_method, payment_status, delivery_address, created_at, delivery_code, delivery_code_used, dispatch_rider_name, dispatch_rider_phone, vendor:vendor_profiles(shop_name)`)
     .eq("id", params.orderId)
     .eq("buyer_id", userId)
     .single();
@@ -53,6 +53,22 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
           <div>
             <DeliveryCodeBox code={order.delivery_code ?? null} />
             <p className="mt-3 text-xs text-rose-600">Do not share this code until your order arrives.</p>
+          </div>
+        )}
+
+        {order.dispatch_rider_name && (
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="text-lg font-semibold">Your Delivery Rider</h3>
+            <div className="mt-3 text-sm text-slate-700">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Name</span>
+                <span>{order.dispatch_rider_name}</span>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="font-medium">Phone</span>
+                <a className="text-sky-600" href={`tel:${order.dispatch_rider_phone}`}>{order.dispatch_rider_phone}</a>
+              </div>
+            </div>
           </div>
         )}
       </div>

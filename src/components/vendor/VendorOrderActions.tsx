@@ -10,9 +10,10 @@ interface VendorOrderActionsProps {
   orderId: string;
   status: string;
   buyerId: string;
+  onStatusChange?: (newStatus: string) => void;
 }
 
-export function VendorOrderActions({ orderId, status: initialStatus, buyerId }: VendorOrderActionsProps) {
+export function VendorOrderActions({ orderId, status: initialStatus, buyerId, onStatusChange }: VendorOrderActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export function VendorOrderActions({ orderId, status: initialStatus, buyerId }: 
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Unable to update order status");
       setCurrentStatus(newStatus);
+      if (onStatusChange) onStatusChange(newStatus);
       toast.success("Order updated successfully!");
       router.refresh();
     } catch (err) {
@@ -49,9 +51,8 @@ export function VendorOrderActions({ orderId, status: initialStatus, buyerId }: 
   );
 
   const shipOrder = () => {
-    const trackingNumber = window.prompt("Enter tracking number (optional):", "") ?? "";
     executeAction(`/api/vendor/orders/${orderId}/ship`, "out_for_delivery", {
-      status: "out_for_delivery", tracking_number: trackingNumber
+      status: "out_for_delivery"
     });
   };
 
@@ -67,6 +68,7 @@ export function VendorOrderActions({ orderId, status: initialStatus, buyerId }: 
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || "Invalid delivery code");
       setCurrentStatus("delivered");
+      if (onStatusChange) onStatusChange("delivered");
       toast.success("Delivery verified — order marked as delivered");
       router.refresh();
     } catch (err) {

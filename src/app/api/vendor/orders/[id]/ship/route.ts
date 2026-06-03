@@ -26,11 +26,6 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const body = await request.json();
   const requestedStatus = body.status ?? "out_for_delivery";
-  const trackingNumber = body.tracking_number?.trim();
-
-  if (requestedStatus === "out_for_delivery" && !trackingNumber) {
-    return NextResponse.json({ error: "Tracking number is required for out_for_delivery" }, { status: 400 });
-  }
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -52,9 +47,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     : { address: order.delivery_address ?? "" };
 
   const updatePayload: any = { status: requestedStatus };
-  if (requestedStatus === "out_for_delivery") {
-    updatePayload.delivery_address = { ...deliveryAddress, tracking_number: trackingNumber };
-  }
 
   const { error } = await supabase.from("orders").update(updatePayload).eq("id", params.id).eq("vendor_id", vendorProfileId);
 
@@ -63,7 +55,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   if (requestedStatus === "out_for_delivery") {
-    await createOrderNotification(order.buyer_id, "Order shipped", `Your order ${order.id.slice(0, 8)} is out for delivery with tracking number ${trackingNumber}.`, order.id);
+    await createOrderNotification(order.buyer_id, "Order shipped", `Your order ${order.id.slice(0, 8)} is out for delivery.`, order.id);
   } else if (requestedStatus === "preparing") {
     await createOrderNotification(order.buyer_id, "Order preparing", `Your order ${order.id.slice(0, 8)} is being prepared.`, order.id);
   }
