@@ -68,12 +68,16 @@ export async function POST(request: NextRequest) {
     );
     const deliveryFee = 1000;
 
+    // generate a random 6-digit delivery code for buyer verification
+    const deliveryCode = Math.floor(100000 + Math.random() * 900000).toString();
+
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         buyer_id: userId,
         vendor_id: vendorIds[0],
         status: "pending",
+        delivery_code: deliveryCode,
         subtotal,
         delivery_fee: deliveryFee,
         total: subtotal + deliveryFee,

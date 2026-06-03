@@ -54,6 +54,9 @@ export default function VendorOrderDetailPage() {
   const params = useParams();
   const orderId = params?.id;
   const [order, setOrder] = useState<VendorOrderDetail | null>(null);
+  const [riderName, setRiderName] = useState("");
+  const [riderPhone, setRiderPhone] = useState("");
+  const [savingRider, setSavingRider] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -284,6 +287,37 @@ export default function VendorOrderDetailPage() {
             <p className="mt-2 text-sm text-slate-600">Update this order as it progresses through your kitchen and delivery.</p>
             <div className="mt-6">
               <VendorOrderActions orderId={order.id} status={order.status} buyerId={order.buyer_id} />
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">Assign Dispatch Rider</h2>
+            <p className="mt-2 text-sm text-slate-600">Provide the rider's name and phone for this order.</p>
+            <div className="mt-4 space-y-3">
+              <input value={riderName} onChange={(e) => setRiderName(e.target.value)} placeholder="Rider name" className="w-full rounded-md border border-slate-200 px-3 py-2" />
+              <input value={riderPhone} onChange={(e) => setRiderPhone(e.target.value)} placeholder="Rider phone" className="w-full rounded-md border border-slate-200 px-3 py-2" />
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={async () => {
+                  if (!riderName && !riderPhone) return;
+                  setSavingRider(true);
+                  try {
+                    const res = await fetch(`/api/vendor/orders/${order.id}/assign-rider`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: riderName, phone: riderPhone }),
+                    });
+                    const payload = await res.json();
+                    if (!res.ok) throw new Error(payload.error || "Failed to save");
+                    // success
+                    setRiderName(""); setRiderPhone("");
+                    router.refresh();
+                    alert("Rider assigned");
+                  } catch (err) {
+                    console.error(err);
+                    alert(err instanceof Error ? err.message : "Failed to assign rider");
+                  } finally { setSavingRider(false); }
+                }} className="rounded-full bg-emerald-600 px-4 py-2 text-white">{savingRider ? "Saving..." : "Save"}</button>
+              </div>
             </div>
           </section>
 
