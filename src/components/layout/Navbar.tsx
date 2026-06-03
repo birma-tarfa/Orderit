@@ -308,6 +308,9 @@ export function Navbar() {
                             My Store
                           </Link>
                         ) : null}
+                        <Link href="/vendor/profile" className="block px-4 py-3 text-sm hover:bg-slate-100">
+                          My Profile
+                        </Link>
                         <Link href="/vendor/dashboard" className="block px-4 py-3 text-sm hover:bg-slate-100">
                           Vendor Dashboard
                         </Link>
@@ -397,6 +400,9 @@ export function Navbar() {
                   <>
                     <Link href="/vendor/dashboard" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                       Vendor Dashboard
+                    </Link>
+                    <Link href="/vendor/profile" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
+                      My Profile
                     </Link>
                     <Link href="/vendor/products" className="block rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-slate-100">
                       My Products
