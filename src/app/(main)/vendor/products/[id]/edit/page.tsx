@@ -173,7 +173,7 @@ export default function EditVendorProductPage() {
         price: Number(values.price),
         compare_price: values.compare_price ? Number(values.compare_price) : null,
         stock_quantity: Number(values.stock_quantity),
-        sku: values.sku || null,
+        sku: values.sku?.trim() || null,
         is_active: values.is_active,
         images: imageList,
         preparation_time: Number(values.preparation_time),
@@ -200,7 +200,7 @@ export default function EditVendorProductPage() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">Edit Product</h1>
-          <p className="mt-2 text-sm text-slate-600">Update your menu item details and availability.</p>
+          <p className="mt-2 text-sm text-slate-600">Update your product details and availability.</p>
         </div>
         <button
           type="button"

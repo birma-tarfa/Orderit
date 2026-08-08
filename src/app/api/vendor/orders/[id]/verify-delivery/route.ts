@@ -23,7 +23,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
     if (order.delivery_code_used) return NextResponse.json({ error: "Delivery code already used" }, { status: 400 });
     if (order.delivery_code !== code) return NextResponse.json({ error: "Invalid delivery code" }, { status: 400 });
 
-    await supabase.from("orders").update({ status: "delivered", delivery_code_used: true }).eq("id", params.id);
+    await supabase.from("orders").update({ 
+      status: "delivered", 
+      delivery_code_used: true,
+      payment_status: "paid"
+    }).eq("id", params.id);
 
     // Notify buyer
     await supabase.from("notifications").insert({

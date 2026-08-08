@@ -47,8 +47,8 @@ export async function generateMetadata({ params }: VendorStorePageProps): Promis
     }
 
     return {
-      title: `${vendor.shop_name} | FreshDrop`,
-      description: vendor.shop_description || `Shop at ${vendor.shop_name} on FreshDrop`,
+      title: `${vendor.shop_name} | Tradeloft`,
+      description: vendor.shop_description || `Shop at ${vendor.shop_name} on Tradeloft`,
     };
   } catch {
     return {

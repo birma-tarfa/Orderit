@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { statusLabel, statusColor } from "@/lib/order-status";
 
 interface VendorOrderRow {
   id: string;
@@ -29,23 +30,9 @@ const statusFilterMap: Record<string, string[] | null> = {
   pending: ["pending"],
   confirmed: ["confirmed"],
   preparing: ["preparing"],
-  out_for_delivery: ["out_for_delivery"],
+  out_for_delivery: ["out_for_delivery", "shipped"],
   delivered: ["delivered"],
   cancelled: ["cancelled"],
-};
-
-const getStatusLabel = (status: string) => {
-  if (status === "shipped" || status === "out_for_delivery") return "Out for Delivery";
-  return status.charAt(0).toUpperCase() + status.slice(1);
-};
-
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
-  out_for_delivery: "bg-purple-100 text-purple-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-rose-100 text-rose-800",
 };
 
 export default function VendorOrdersPage() {
@@ -249,8 +236,8 @@ export default function VendorOrdersPage() {
                   <td className="px-4 py-4 text-slate-900">{order.items_count}</td>
                   <td className="px-4 py-4 text-slate-900">₦{order.total.toLocaleString()}</td>
                   <td className="px-4 py-4">
-                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusColors[order.status] ?? "bg-slate-100 text-slate-800"}`}>
-                      {getStatusLabel(order.status)}
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusColor(order.status)}`}>
+                      {statusLabel(order.status)}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-slate-600">{new Date(order.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}</td>
@@ -266,7 +253,7 @@ export default function VendorOrdersPage() {
                       <button
                         type="button"
                         onClick={() => performOrderAction(order.id, "confirm")}
-                        className="rounded-full bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                        className="rounded-full bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
                       >
                         Confirm
                       </button>
@@ -275,27 +262,29 @@ export default function VendorOrdersPage() {
                       <button
                         type="button"
                         onClick={() => performOrderAction(order.id, "ship")}
-                        className="rounded-full bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-700"
+                        className="rounded-full bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700"
                       >
                         Mark as Preparing
                       </button>
                     )}
-                                    {(order.status === "out_for_delivery" || order.status === "shipped") && (
+                    {order.status === "preparing" && (
+                      <button
+                        type="button"
+                        onClick={() => performOrderAction(order.id, "ship")}
+                        className="rounded-full bg-orange-600 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-700"
+                      >
+                        Out for Delivery
+                      </button>
+                    )}
+                    {(order.status === "out_for_delivery" || order.status === "shipped") && (
                       <button
                         type="button"
                         onClick={() => performOrderAction(order.id, "deliver")}
-                        className="rounded-full bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                        className="rounded-full bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-700"
                       >
-                        Deliver
+                        Mark as Delivered
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => performOrderAction(order.id, "cancel")}
-                      className="rounded-full border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                    >
-                      Cancel
-                    </button>
                   </td>
                 </tr>
               ))}

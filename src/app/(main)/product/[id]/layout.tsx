@@ -58,8 +58,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       category: category || { name: '' },
     } as ProductWithVendor;
     return {
-      title: `${productData.name} | FreshDrop`,
-      description: productData.description?.substring(0, 160) || `Order ${productData.name} from ${productData.vendor.shop_name}`,
+      title: `${productData.name} | Tradeloft`,
+      description: productData.description?.substring(0, 160) || `Buy ${productData.name} from ${productData.vendor.shop_name}`,
       openGraph: {
         title: productData.name,
         description: productData.description?.substring(0, 160) || `Order ${productData.name}`,

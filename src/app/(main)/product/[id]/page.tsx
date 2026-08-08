@@ -15,8 +15,9 @@ import { useCurrencyStore } from '@/store/currencyStore';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { ProductReviewsSection } from '@/components/product/ProductReviewsSection';
+import { Product as GlobalProduct } from '@/types';
 
-interface ProductWithVendor extends Product {
+interface ProductWithVendor extends GlobalProduct {
   vendor: {
     id: string;
     shop_name: string;
@@ -28,6 +29,7 @@ interface ProductWithVendor extends Product {
   category: {
     name: string;
   };
+  updated_at: string;
 }
 
 export default function ProductDetailPage() {
@@ -51,10 +53,10 @@ export default function ProductDetailPage() {
       try {
         setLoading(true);
 
-        // Fetch product details without relationship hints
+        // Fetch product with joined vendor and category in one request
         const { data: productData, error: productError } = await supabase
           .from('products')
-          .select('*')
+          .select('*, vendor:vendor_profiles(*), category:categories(name)')
           .eq('id', productId)
           .eq('is_active', true)
           .single();
@@ -64,72 +66,32 @@ export default function ProductDetailPage() {
           return;
         }
 
-        // Fetch vendor details for this product
-        const { data: vendor } = await supabase
-          .from('users')
-          .select('id,full_name,shop_name,rating,total_sales,created_at,is_verified')
-          .eq('id', productData.vendor_id)
-          .single();
-
-        // Fetch category details for this product
-        const { data: category } = await supabase
-          .from('categories')
-          .select('name')
-          .eq('id', productData.category_id)
-          .single();
-
-        const enrichedProduct = {
+        setProduct({
           ...productData,
-          vendor: vendor || {},
-          category: category || {},
-        };
-
-        setProduct(enrichedProduct);
+          created_at: new Date(productData.created_at),
+          // Ensure fallback objects match the interface to prevent runtime errors
+          vendor: productData.vendor || { id: '', shop_name: 'Unknown', rating: 0, total_sales: 0, created_at: '', is_verified: false },
+          category: productData.category || { name: 'Uncategorized' },
+        });
         setMainImage(0);
 
         // Fetch related products (same category, different vendor)
         if (productData.category_id) {
           const { data: related } = await supabase
             .from('products')
-            .select('*')
+            .select('*, vendor:vendor_profiles(id, shop_name, rating, is_verified), category:categories(name)')
             .eq('category_id', productData.category_id)
             .eq('is_active', true)
             .neq('id', productId)
             .limit(6);
 
           if (related && related.length > 0) {
-            // Batch fetch vendors for related products
-            const relatedVendorIds = [...new Set(related.map(p => p.vendor_id))];
-            const { data: relatedVendors } = await supabase
-              .from('users')
-              .select('id,full_name,shop_name,rating,total_sales,created_at,is_verified')
-              .in('id', relatedVendorIds);
-
-            const vendorsById = (relatedVendors || []).reduce((acc: any, v: any) => {
-              acc[v.id] = v;
-              return acc;
-            }, {});
-
-            // Batch fetch categories for related products
-            const relatedCategoryIds = [...new Set(related.map(p => p.category_id).filter(Boolean))];
-            const { data: relatedCategories } = relatedCategoryIds.length
-              ? await supabase
-                  .from('categories')
-                  .select('id,name')
-                  .in('id', relatedCategoryIds)
-              : { data: [] };
-
-            const categoriesById = (relatedCategories || []).reduce((acc: any, c: any) => {
-              acc[c.id] = c;
-              return acc;
-            }, {});
-
             const enrichedRelated = related.map((p: any) => ({
               ...p,
-              vendor: vendorsById[p.vendor_id] || {},
-              category: categoriesById[p.category_id] || {},
+              created_at: new Date(p.created_at),
+              vendor: p.vendor || { shop_name: 'Unknown Vendor' },
+              category: p.category || { name: 'Uncategorized' },
             }));
-
             setRelatedProducts(enrichedRelated);
           }
         }
@@ -144,13 +106,36 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [productId, supabase]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product) {
+      // Update local Zustand state for immediate UI feedback
       addItem({
         id: product.id,
         product,
         quantity,
+        vendor: {
+          id: product.vendor.id,
+          shop_name: product.vendor.shop_name,
+        },
       });
+
+      // If user is logged in, sync to the database
+      if (user) {
+        try {
+          const { error } = await supabase
+            .from('cart_items')
+            .upsert({
+              user_id: user.id,
+              product_id: product.id,
+              vendor_id: product.vendor.id, // Ensure we use the joined vendor id
+              quantity: quantity,
+            }, { onConflict: 'user_id,product_id' });
+
+          if (error) throw error;
+        } catch (err) {
+          console.error('Failed to sync cart to database:', err);
+        }
+      }
     }
   };
 
@@ -188,8 +173,8 @@ export default function ProductDetailPage() {
               <Image
                 src={product.images[mainImage]}
                 alt={product.name}
-                fill
-                className="object-cover"
+                fill // Removed duplicate className
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 priority
               />
             ) : (
@@ -219,7 +204,8 @@ export default function ProductDetailPage() {
                   <Image
                     src={image}
                     alt={`${product.name} ${idx + 1}`}
-                    fill
+                    fill // Removed duplicate className
+                    sizes="80px"
                     className="object-cover"
                   />
                 </button>
@@ -231,8 +217,8 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div className="space-y-6">
           {/* Category Badge */}
-          {product.category && (
-            <Badge variant="outline" className="w-fit">{product.category.name}</Badge>
+          {product.category?.name && (
+            <Badge className="w-fit border border-slate-200 bg-transparent text-slate-600">{product.category.name}</Badge>
           )}
 
           {/* Title and Vendor */}
@@ -344,7 +330,7 @@ export default function ProductDetailPage() {
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   Order Now
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button className="w-full border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
                   Buy Now
                 </Button>
               </div>
@@ -358,11 +344,11 @@ export default function ProductDetailPage() {
               vendorName={product.vendor.shop_name}
               className="flex-1"
             />
-            <Button variant="outline" className="flex-1">
+            <Button className="flex-1 border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
               <Heart className="mr-2 h-4 w-4" />
               Wishlist
             </Button>
-            <Button variant="outline" className="flex-1">
+            <Button className="flex-1 border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
               <Share2 className="mr-2 h-4 w-4" />
               Share
             </Button>
@@ -452,8 +438,8 @@ export default function ProductDetailPage() {
               </div>
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <Link href={`/vendor/${product.vendor.id}`}>
-                  <Button variant="outline" className="w-full">
-                    View Menu
+                  <Button className="w-full border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
+                    View Store
                   </Button>
                 </Link>
               </div>
@@ -475,7 +461,8 @@ export default function ProductDetailPage() {
                       <Image
                         src={relatedProduct.images[0]}
                         alt={relatedProduct.name}
-                        fill
+                        fill // Removed duplicate className
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover group-hover:scale-105 transition"
                       />
                     ) : (
@@ -534,17 +521,6 @@ export default function ProductDetailPage() {
               ratingValue: product.rating,
               reviewCount: product.review_count,
             },
-            review: reviews.map((review) => ({
-              '@type': 'Review',
-              reviewRating: {
-                '@type': 'Rating',
-                ratingValue: review.rating,
-              },
-              author: {
-                '@type': 'Person',
-                name: review.buyer.full_name,
-              },
-            })),
           }),
         }}
       />

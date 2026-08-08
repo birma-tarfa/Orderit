@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { VendorOrderActions } from "@/components/vendor/VendorOrderActions";
 import { OrderTimeline } from "@/components/order/OrderTimeline";
+import { statusLabel, statusColor } from "@/lib/order-status";
 
 interface OrderItemRow {
   id: string;
@@ -28,26 +29,6 @@ interface VendorOrderDetail {
   buyer_name: string;
   order_items: OrderItemRow[];
 }
-
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  shipped: "Out for Delivery",
-  out_for_delivery: "Out for Delivery",
-  preparing: "Preparing",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
-  out_for_delivery: "bg-purple-100 text-purple-800",
-  preparing: "bg-slate-100 text-slate-800",
-  delivered: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-rose-100 text-rose-800",
-};
 
 export default function VendorOrderDetailPage() {
   const router = useRouter();
@@ -218,8 +199,8 @@ export default function VendorOrderDetailPage() {
                 <p className="text-sm font-semibold text-slate-500">Order ID</p>
                 <p className="mt-2 text-base text-slate-900">{order.id}</p>
               </div>
-              <span className={`inline-flex rounded-full px-3 py-2 text-sm font-semibold ${statusColors[order.status] ?? "bg-slate-100 text-slate-800"}`}>
-                {statusLabels[order.status] ?? order.status}
+              <span className={`inline-flex rounded-full px-3 py-2 text-sm font-semibold ${statusColor(order.status)}`}>
+                {statusLabel(order.status)}
               </span>
             </div>
             <div className="grid gap-4 md:grid-cols-3">

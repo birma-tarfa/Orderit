@@ -1,3 +1,7 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { useNotifications } from '@/hooks/useNotifications';
 import { createClient } from '@/lib/supabase/client';
 
 function formatTimeAgo(date: string) {
@@ -56,7 +60,7 @@ export default function BuyerNotificationsPage() {
 
       const response = await fetch(`/api/notifications?${params}`, {
         headers: {
-          'Authorization': `Bearer ${(await createClient().auth.getSession()).then(s => s.data.session?.access_token)}`,
+          'Authorization': `Bearer ${(await createClient().auth.getSession()).data.session?.access_token}`,
         },
       });
 

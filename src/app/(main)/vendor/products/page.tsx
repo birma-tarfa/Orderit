@@ -125,7 +125,7 @@ export default function VendorProductsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">Your Products</h1>
-          <p className="mt-2 text-sm text-slate-600">Manage your dishes, pricing, stock, and publish status.</p>
+          <p className="mt-2 text-sm text-slate-600">Manage your products, pricing, stock, and publish status.</p>
         </div>
         <button
           type="button"

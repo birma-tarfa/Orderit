@@ -1,4 +1,5 @@
 'use client';
+import { useCartStore } from '@/store/cartStore';
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -10,6 +11,7 @@ export default function CheckoutVerifyPage() {
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [orderId, setOrderId] = useState<string | null>(null);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
     const verify = async () => {
@@ -24,6 +26,7 @@ export default function CheckoutVerifyPage() {
           const res = await fetch(`/api/payments/paystack/verify?reference=${reference}`);
           const data = await res.json();
           if (data.success) {
+            clearCart();
             setStatus('success');
             setTimeout(() => router.push(`/buyer/orders`), 3000);
           } else {
@@ -34,6 +37,7 @@ export default function CheckoutVerifyPage() {
           const res = await fetch(`/api/payments/flutterwave/verify?transaction_id=${transactionId}`);
           const data = await res.json();
           if (data.success) {
+            clearCart();
             setStatus('success');
             setTimeout(() => router.push(`/buyer/orders`), 3000);
           } else {

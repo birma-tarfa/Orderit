@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Check, Truck, ShieldCheck, X } from "lucide-react";
+import { MessageCircle, Check, Truck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import toast from "react-hot-toast";
 
@@ -18,7 +18,6 @@ export function VendorOrderActions({ orderId, status: initialStatus, buyerId, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
-  const [codeInput, setCodeInput] = useState("");
 
   const executeAction = async (url: string, newStatus: string, body?: Record<string, unknown>) => {
     setLoading(true);
@@ -56,34 +55,8 @@ export function VendorOrderActions({ orderId, status: initialStatus, buyerId, on
     });
   };
 
-  const verifyDelivery = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/vendor/orders/${orderId}/verify-delivery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: codeInput }),
-      });
-      const payload = await res.json();
-      if (!res.ok) throw new Error(payload.error || "Invalid delivery code");
-      setCurrentStatus("delivered");
-      if (onStatusChange) onStatusChange("delivered");
-      toast.success("Delivery verified — order marked as delivered");
-      router.refresh();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Verification failed";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const cancelOrder = () => {
-    const reason = window.prompt("Enter cancel reason:", "Out of stock");
-    if (reason === null) return;
-    executeAction(`/api/vendor/orders/${orderId}/cancel`, "cancelled", { reason });
+  const markDelivered = () => {
+    executeAction(`/api/vendor/orders/${orderId}/deliver`, "delivered");
   };
 
   return (
@@ -106,30 +79,16 @@ export function VendorOrderActions({ orderId, status: initialStatus, buyerId, on
         )}
         {currentStatus === "preparing" && (
           <Button onClick={shipOrder} disabled={loading}
-            className="rounded-full bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700">
+            className="rounded-full bg-orange-600 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-700">
             <Truck className="mr-2 h-4 w-4" />
             {loading ? "Updating..." : "Out for Delivery"}
           </Button>
         )}
         {currentStatus === "out_for_delivery" && (
-          <div className="flex items-center gap-3">
-            <input
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              placeholder="Enter buyer's 6-digit code"
-              className="w-48 rounded-md border border-slate-200 px-3 py-2 text-sm"
-            />
-            <Button onClick={verifyDelivery} disabled={loading || codeInput.length < 4}
-              className="rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              {loading ? "Verifying..." : "Verify Delivery"}
-            </Button>
-          </div>
-        )}
-        {currentStatus !== "delivered" && currentStatus !== "cancelled" && (
-          <Button onClick={cancelOrder} disabled={loading}
-            className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-700">
-            <X className="mr-2 h-4 w-4" /> Cancel Order
+          <Button onClick={markDelivered} disabled={loading}
+            className="rounded-full bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-700">
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            {loading ? "Marking..." : "Mark as Delivered"}
           </Button>
         )}
         <Button

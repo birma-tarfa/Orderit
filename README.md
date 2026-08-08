@@ -1,4 +1,19 @@
-This is the FreshDrop project, a food-focused marketplace built with [Next.js](https://nextjs.org).
+This is the Tradeloft project, a general ecommerce marketplace built with [Next.js](https://nextjs.org). Tradeloft originated from the Orderit/FreshDrop food-edition codebase and now supports buyers and vendors across many categories.
+
+## Categories
+
+Tradeloft supports a broad range of categories:
+
+- Electronics
+- Fashion
+- Food & Drinks
+- Beauty
+- Home & Kitchen
+- Jewelry & Watches
+- Phones & Accessories
+- Agriculture
+- Services
+- Others
 
 ## Getting Started
 

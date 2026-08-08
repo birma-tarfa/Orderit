@@ -99,7 +99,7 @@ export function Navbar() {
     await markAsRead(notificationId);
     setNotificationsOpen(false);
     if (link) {
-      window.location.href = link;
+      router.push(link);
     }
   };
 
@@ -108,7 +108,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <div className="flex items-center gap-4">
           <Link href="/" className="text-2xl font-bold tracking-tight text-[#1a7a4a]">
-            FreshDrop
+            Tradeloft
           </Link>
           <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 md:flex">
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 w-full">
@@ -149,6 +149,8 @@ export function Navbar() {
                   "Food & Drinks",
                   "Beauty",
                   "Home & Kitchen",
+                  "Jewelry & Watches",
+                  "Phones & Accessories",
                   "Agriculture",
                   "Services",
                   "Others",
@@ -377,6 +379,8 @@ export function Navbar() {
                   "Food & Drinks",
                   "Beauty",
                   "Home & Kitchen",
+                  "Jewelry & Watches",
+                  "Phones & Accessories",
                   "Agriculture",
                   "Services",
                   "Others",

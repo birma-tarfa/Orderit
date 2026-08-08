@@ -98,6 +98,24 @@ export async function POST(request: NextRequest) {
     if (itemsError)
       return NextResponse.json({ error: "Failed to save order items" }, { status: 500 });
 
+
+
+    // Deduct stock for each product
+    try {
+      for (const item of orderItems) {
+        const product = products.find((p: any) => p.id === item.product_id);
+        if (product) {
+          const newStock = Math.max(0, product.stock_quantity - item.quantity);
+          await supabase
+            .from("products")
+            .update({ stock_quantity: newStock })
+            .eq("id", item.product_id);
+        }
+      }
+    } catch (stockErr) {
+      console.error("Failed to deduct stock:", stockErr);
+    }
+
     return NextResponse.json({ status: true, orderId: order.id }, { status: 201 });
   } catch (error) {
     console.error("Order create error:", JSON.stringify(error));

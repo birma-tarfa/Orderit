@@ -151,4 +151,8 @@ export interface CartItem {
   id: string;
   product: Product;
   quantity: number;
+  vendor: {
+    id: string;
+    shop_name: string;
+  };
 }

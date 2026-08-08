@@ -14,8 +14,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FreshDrop - Order Fresh Food From Local Nigerian Kitchens",
-  description: "Order fresh meals, snacks, and drinks from verified local food vendors",
+  title: "Tradeloft - Shop Anything From Trusted Local Vendors",
+  description: "Shop electronics, fashion, food, beauty, jewelry, watches, and more from verified local vendors",
 };
 
 export default function RootLayout({

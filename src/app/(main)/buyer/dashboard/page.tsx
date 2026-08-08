@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { statusLabel, statusColor } from "@/lib/order-status";
 import { ShoppingBag, CreditCard, Clock, CheckCircle } from "lucide-react";
 
 interface BuyerStats {
@@ -138,23 +139,6 @@ async function getRecentOrders(userId: string): Promise<RecentOrder[]> {
 
 function formatCurrency(value: number) {
   return `₦${value.toLocaleString()}`;
-}
-
-function getStatusClass(status: string) {
-  switch (status) {
-    case "delivered":
-      return "bg-emerald-100 text-emerald-800";
-    case "shipped":
-      return "bg-blue-100 text-blue-800";
-    case "confirmed":
-      return "bg-amber-100 text-amber-800";
-    case "pending":
-      return "bg-slate-100 text-slate-800";
-    case "cancelled":
-      return "bg-rose-100 text-rose-800";
-    default:
-      return "bg-slate-100 text-slate-700";
-  }
 }
 
 export default async function BuyerDashboard() {

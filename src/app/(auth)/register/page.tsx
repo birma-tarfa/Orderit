@@ -84,13 +84,13 @@ export default function RegisterPage() {
           <div className="space-y-6">
             <div>
               <p className="inline-flex rounded-full bg-emerald-100 px-4 py-1 text-sm font-semibold uppercase tracking-[0.3em] text-emerald-900">
-                FreshDrop
+                Tradeloft
               </p>
               <h1 className="mt-6 text-4xl font-semibold text-slate-900 sm:text-5xl">
                 Create your account
               </h1>
               <p className="mt-4 max-w-xl text-sm text-slate-600 sm:text-base">
-                Join thousands of food lovers and vendors on FreshDrop.
+                Join thousands of buyers and vendors on Tradeloft.
               </p>
             </div>
 
@@ -151,14 +151,14 @@ export default function RegisterPage() {
                   {activeRole === "vendor" && (
                     <>
                       <div className="space-y-2">
-                        <label htmlFor="shop_name" className="text-sm font-medium text-slate-700">Kitchen / restaurant name</label>
-                        <Input id="shop_name" type="text" {...register("shop_name")} placeholder="Mama's Kitchen" />
+                        <label htmlFor="shop_name" className="text-sm font-medium text-slate-700">Shop / business name</label>
+                        <Input id="shop_name" type="text" {...register("shop_name")} placeholder="Ada's Boutique" />
                         {errors.shop_name && <p className="text-sm text-red-600">{errors.shop_name.message}</p>}
                       </div>
 
                       <div className="space-y-2">
                         <label htmlFor="shop_description" className="text-sm font-medium text-slate-700">Description</label>
-                        <Input id="shop_description" type="text" {...register("shop_description")} placeholder="What food do you serve?" />
+                        <Input id="shop_description" type="text" {...register("shop_description")} placeholder="What do you sell?" />
                         {errors.shop_description && <p className="text-sm text-red-600">{errors.shop_description.message}</p>}
                       </div>
 
@@ -199,16 +199,16 @@ export default function RegisterPage() {
           <div className="rounded-[2rem] bg-gradient-to-br from-emerald-900 via-slate-900 to-[#0f4f36] p-8 text-white shadow-xl sm:p-12">
             <div className="space-y-6">
               <div className="rounded-3xl bg-white/10 p-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">FreshDrop</p>
-                <h2 className="mt-4 text-3xl font-semibold">Fresh food, dropped to your door.</h2>
+                <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">Tradeloft</p>
+                <h2 className="mt-4 text-3xl font-semibold">Anything you need, from vendors you trust.</h2>
               </div>
               <ul className="space-y-4 text-sm leading-7 text-emerald-100">
-                <li>• Order from verified local food vendors.</li>
+                <li>• Shop from verified local vendors across every category.</li>
                 <li>• Pay with Paystack or Flutterwave.</li>
-                <li>• Track your order from kitchen to door.</li>
+                <li>• Track your order from vendor to door.</li>
               </ul>
               <p className="rounded-3xl bg-white/10 p-5 text-sm text-slate-200">
-                Join thousands of Nigerians already ordering on FreshDrop.
+                Join thousands of Nigerians already shopping on Tradeloft.
               </p>
             </div>
           </div>

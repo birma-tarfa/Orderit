@@ -94,7 +94,7 @@ export function VendorCard({ vendor, showFollowButton = true }: VendorCardProps)
               </div>
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4" />
-                <span>{totalProducts} menu items</span>
+                <span>{totalProducts} products</span>
               </div>
               <div className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
@@ -111,7 +111,7 @@ export function VendorCard({ vendor, showFollowButton = true }: VendorCardProps)
         {/* Action Buttons */}
         <div className="mt-4 flex gap-2">
           <Link href={`/vendor/${vendor.id}/store`} className="flex-1">
-            <Button className="w-full">View Menu</Button>
+            <Button className="w-full">View Store</Button>
           </Link>
           {showFollowButton && (
             <Button variant="outline" className="flex-1">

@@ -134,14 +134,14 @@ export default function NewVendorProductPage() {
       const imageList = imageUrls.slice(0, 5);
 
       const { error } = await supabase.from("products").insert({
-        vendor_id: user.id,
+        vendor_id: vendorProfileId,
         name: values.name,
         description: values.description || null,
         category_id: values.category_id || null,
         price: Number(values.price),
         compare_price: values.compare_price ? Number(values.compare_price) : null,
         stock_quantity: Number(values.stock_quantity),
-        sku: values.sku || null,
+        sku: values.sku?.trim() || null,
         is_active: values.is_active,
         images: imageList,
         preparation_time: Number(values.preparation_time),
@@ -168,7 +168,7 @@ export default function NewVendorProductPage() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">Add New Product</h1>
-          <p className="mt-2 text-sm text-slate-600">Create a new dish and publish it to your storefront.</p>
+          <p className="mt-2 text-sm text-slate-600">Create a new product and publish it to your storefront.</p>
         </div>
         <button
           type="button"

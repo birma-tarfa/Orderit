@@ -1,11 +1,14 @@
 import { formatCurrency } from "@/constants";
 import type { CartItem } from "@/types";
+import { useCart } from "@/hooks/useCart";
 
 interface CartDrawerProps {
   items: CartItem[];
 }
 
 export function CartDrawer({ items }: CartDrawerProps) {
+  const { loading } = useCart();
+
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
@@ -20,10 +23,16 @@ export function CartDrawer({ items }: CartDrawerProps) {
         <p className="mt-2 text-sm text-slate-600">Review your items and total before paying.</p>
       </div>
 
-      {items.length === 0 ? (
+      {loading && (
+        <div className="flex justify-center py-4">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600" />
+        </div>
+      )}
+
+      {items.length === 0 && !loading ? (
         <p className="text-sm text-slate-600">Your cart is empty.</p>
       ) : (
-        <div className="space-y-4">
+        <div className={`space-y-4 ${loading ? 'opacity-50' : ''}`}>
           <div className="space-y-3">
             {items.map((item) => (
               <div key={item.id} className="rounded-2xl border border-slate-200 p-3">

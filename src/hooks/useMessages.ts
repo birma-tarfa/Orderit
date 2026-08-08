@@ -93,6 +93,32 @@ export function useMessages(conversationId?: string | null, currentUserId?: stri
       if (current.some(msg => msg.id === data.id)) return current;
       return [...current, data];
     });
+
+    // Send notification to receiver
+    try {
+      const { data: sessionData } = await createClient().auth.getSession();
+      const { data: senderProfile } = await createClient()
+        .from('users')
+        .select('full_name')
+        .eq('id', currentUserId)
+        .single();
+      await fetch('/api/notifications/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionData.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          receiverId: conversationId,
+          senderName: senderProfile?.full_name || 'Someone',
+          content,
+          senderId: currentUserId,
+        }),
+      });
+    } catch (notifError) {
+      console.error('Failed to send message notification:', notifError);
+    }
+
     return data;
   }, [currentUserId, conversationId]);
 

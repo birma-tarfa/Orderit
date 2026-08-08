@@ -104,10 +104,10 @@ export default function MarketplacePage() {
         <div className="mx-auto max-w-4xl space-y-8">
           <div className="space-y-4 text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-              Order Fresh Food From Local Nigerian Kitchens
+              Shop Anything From Trusted Local Vendors
             </h1>
             <p className="mx-auto max-w-2xl text-lg text-emerald-100 sm:text-xl">
-              Hot meals, snacks, and drinks delivered to your door from verified food vendors.
+              Electronics, fashion, food, beauty, jewelry, and more, delivered to your door from verified vendors.
             </p>
           </div>
           <div className="mx-auto max-w-2xl space-y-6">
@@ -116,7 +116,7 @@ export default function MarketplacePage() {
               <input
                 className="flex-1 bg-transparent text-white placeholder:text-emerald-200 focus:outline-none"
                 type="search"
-                placeholder="Search meals, restaurants, cuisines..."
+                placeholder="Search products, vendors, categories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
