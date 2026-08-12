@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import type { ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, Menu, Search, ShoppingCart, X, Package, MessageSquare, Star, Settings } from "lucide-react";
@@ -9,8 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { useNotifications } from "@/hooks/useNotifications";
-import { CURRENCY_OPTIONS } from "@/constants";
-import { useCurrencyStore } from "@/store/currencyStore";
 import type { NotificationType } from "@/lib/notifications";
 
 function formatTimeAgo(date: string) {
@@ -45,18 +42,9 @@ export function Navbar() {
   const { user, profile } = useAuthStore();
   const { signOut } = useAuth();
   const cartCount = useCartStore((state) => state.items.length);
-  const currency = useCurrencyStore((state) => state.currency);
-  const setCurrency = useCurrencyStore((state) => state.setCurrency);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
   const isVendor = user?.role === "vendor";
   const isBuyer = user?.role === "buyer";
-
-  useEffect(() => {
-    const savedCurrency = window.localStorage.getItem("currency");
-    if (savedCurrency) {
-      setCurrency(savedCurrency);
-    }
-  }, [setCurrency]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -79,12 +67,6 @@ export function Navbar() {
 
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-
-  const handleCurrencyChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const selectedCurrency = event.target.value;
-    setCurrency(selectedCurrency);
-    window.localStorage.setItem("currency", selectedCurrency);
-  };
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -145,14 +127,15 @@ export function Navbar() {
               <div className="absolute left-0 top-full mt-2 w-48 rounded-3xl border border-slate-200 bg-white p-4 shadow-lg" data-dropdown="categories">
                 {[
                   "Electronics",
+                  "Phones & Accessories",
                   "Fashion",
-                  "Food & Drinks",
-                  "Beauty",
+                  "Beauty & Personal Care",
                   "Home & Kitchen",
                   "Jewelry & Watches",
-                  "Phones & Accessories",
-                  "Agriculture",
-                  "Services",
+                  "Food & Drinks",
+                  "Groceries",
+                  "Sports & Outdoors",
+                  "Automotive",
                   "Others",
                 ].map((category) => (
                   <Link
@@ -169,19 +152,6 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-3 md:flex">
-            <select
-              value={currency}
-              onChange={handleCurrencyChange}
-              className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
-            >
-              {CURRENCY_OPTIONS.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="flex items-center gap-3 md:hidden">
             <button type="button" className="rounded-full bg-slate-100 p-2 text-slate-700" aria-label="Search">
               <Search className="h-5 w-5" />
@@ -375,14 +345,15 @@ export function Navbar() {
               <div className="mt-3 space-y-2">
                 {[
                   "Electronics",
+                  "Phones & Accessories",
                   "Fashion",
-                  "Food & Drinks",
-                  "Beauty",
+                  "Beauty & Personal Care",
                   "Home & Kitchen",
                   "Jewelry & Watches",
-                  "Phones & Accessories",
-                  "Agriculture",
-                  "Services",
+                  "Food & Drinks",
+                  "Groceries",
+                  "Sports & Outdoors",
+                  "Automotive",
                   "Others",
                 ].map((category) => (
                   <Link

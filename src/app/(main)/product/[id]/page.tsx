@@ -15,11 +15,13 @@ import { useCurrencyStore } from '@/store/currencyStore';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { ProductReviewsSection } from '@/components/product/ProductReviewsSection';
+import Script from 'next/script';
 import { Product as GlobalProduct } from '@/types';
 
 interface ProductWithVendor extends GlobalProduct {
   vendor: {
     id: string;
+    userId: string;
     shop_name: string;
     rating: number;
     total_sales: number;
@@ -70,7 +72,20 @@ export default function ProductDetailPage() {
           ...productData,
           created_at: new Date(productData.created_at),
           // Ensure fallback objects match the interface to prevent runtime errors
-          vendor: productData.vendor || { id: '', shop_name: 'Unknown', rating: 0, total_sales: 0, created_at: '', is_verified: false },
+          vendor: productData.vendor
+            ? {
+                ...productData.vendor,
+                userId: productData.vendor.user_id || '',
+              }
+            : {
+                id: '',
+                userId: '',
+                shop_name: 'Unknown',
+                rating: 0,
+                total_sales: 0,
+                created_at: '',
+                is_verified: false,
+              },
           category: productData.category || { name: 'Uncategorized' },
         });
         setMainImage(0);
@@ -160,6 +175,7 @@ export default function ProductDetailPage() {
   }
 
   const discount = product.compare_price ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100) : null;
+  const isOwner = !!user && user.id === product.vendor_id;
 
   return (
     <div className="space-y-8">
@@ -260,18 +276,9 @@ export default function ProductDetailPage() {
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 text-sm text-slate-600">
-              <span className="rounded-full bg-slate-100 px-3 py-1">Prep {product.preparation_time} mins</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">{product.spice_level}</span>
-              {product.is_available_today ? (
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Available today</span>
-              ) : (
-                <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700">Not available today</span>
-              )}
-            </div>
-            {product.dietary_tags.length > 0 && (
+            {product.tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2 text-sm">
-                {product.dietary_tags.map((tag) => (
+                {product.tags.map((tag) => (
                   <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
                     {tag}
                   </span>
@@ -297,62 +304,83 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Quantity Selector */}
-          {product.stock_quantity > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium">Quantity:</label>
-                <div className="flex items-center rounded-lg border border-slate-300">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3 py-2 hover:bg-slate-100"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-16 border-l border-r border-slate-300 px-2 py-2 text-center focus:outline-none"
-                  />
-                  <button
-                    onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
-                    className="px-3 py-2 hover:bg-slate-100"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+          {!isOwner ? (
+            <>
+              {product.stock_quantity > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium">Quantity:</label>
+                    <div className="flex items-center rounded-lg border border-slate-300">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="px-3 py-2 hover:bg-slate-100"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-16 border-l border-r border-slate-300 px-2 py-2 text-center focus:outline-none"
+                      />
+                      <button
+                        onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
+                        className="px-3 py-2 hover:bg-slate-100"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2">
-                <Button className="w-full" onClick={handleAddToCart}>
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Order Now
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <Button className="w-full" onClick={handleAddToCart}>
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Order Now
+                    </Button>
+                    <Button className="w-full border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
+                      Buy Now
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Secondary Buttons */}
+              <div className="flex gap-2 border-t border-slate-200 pt-4">
+                <MessageVendorButton
+                  vendorUserId={product.vendor.userId}
+                  vendorName={product.vendor.shop_name}
+                  className="flex-1"
+                />
+                <Button className="flex-1 border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
+                  <Heart className="mr-2 h-4 w-4" />
+                  Wishlist
                 </Button>
-                <Button className="w-full border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
-                  Buy Now
+                <Button className="flex-1 border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
                 </Button>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
+              <p className="text-sm font-medium text-emerald-800">This is your product listing.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Link
+                  href={`/vendor/products/${product.id}/edit`}
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  Edit Product
+                </Link>
+                <Link
+                  href="/vendor/products"
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  Manage Listings
+                </Link>
               </div>
             </div>
           )}
-
-          {/* Secondary Buttons */}
-          <div className="flex gap-2 border-t border-slate-200 pt-4">
-            <MessageVendorButton 
-              vendorUserId={product.vendor.id}
-              vendorName={product.vendor.shop_name}
-              className="flex-1"
-            />
-            <Button className="flex-1 border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
-              <Heart className="mr-2 h-4 w-4" />
-              Wishlist
-            </Button>
-            <Button className="flex-1 border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -439,91 +467,120 @@ export default function ProductDetailPage() {
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <Link href={`/vendor/${product.vendor.id}`}>
                   <Button className="w-full border border-slate-200 bg-transparent text-slate-900 hover:bg-slate-50">
-                    View Store
+                    {isOwner ? (
+                      <div className="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                        <p className="text-sm font-medium text-emerald-800">This is your product listing.</p>
+                        <div className="flex gap-2">
+                          <Link href={`/vendor/products/${product.id}/edit`} className="flex-1">
+                            <Button className="w-full">Edit Product</Button>
+                          </Link>
+                          <Button variant="outline" className="flex-1">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Quantity Selector */}
+                        {product.stock_quantity > 0 && (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <label className="text-sm font-medium">Quantity:</label>
+                              <div className="flex items-center rounded-lg border border-slate-300">
+                                <button
+                                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                  className="px-3 py-2 hover:bg-slate-100"
+                                >
+                                  −
+                                </button>
+                                <input
+                                  type="number"
+                                  value={quantity}
+                                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                                  className="w-16 border-l border-r border-slate-300 px-2 py-2 text-center focus:outline-none"
+                                />
+                                <button
+                                  onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
+                                  className="px-3 py-2 hover:bg-slate-100"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="space-y-2">
+                              <Button className="w-full" onClick={handleAddToCart}>
+                                <ShoppingCart className="mr-2 h-5 w-5" />
+                                Order Now
+                              </Button>
+                              <Button variant="outline" className="w-full">
+                                Buy Now
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Secondary Buttons */}
+                        <div className="flex gap-2 border-t border-slate-200 pt-4">
+                          <MessageVendorButton
+                            vendorUserId={product.vendor.userId}
+                            vendorName={product.vendor.shop_name}
+                            className="flex-1"
+                          />
+                          <Button variant="outline" className="flex-1">
+                            <Heart className="mr-2 h-4 w-4" />
+                            Wishlist
+                          </Button>
+                          <Button variant="outline" className="flex-1">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </Button>
                 </Link>
+
+                {/* Structured data JSON-LD */}
+                <Script id="product-json-ld" type="application/ld+json">
+                  {JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'Product',
+                    name: product.name,
+                    image: product.images,
+                    description: product.description,
+                    sku: product.sku,
+                    brand: {
+                      '@type': 'Brand',
+                      name: product.vendor.shop_name,
+                    },
+                    offers: {
+                      '@type': 'Offer',
+                      url: typeof window !== 'undefined' ? window.location.href : '',
+                      priceCurrency: currency.code,
+                      price: product.price,
+                      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                      seller: {
+                        '@type': 'Organization',
+                        name: product.vendor.shop_name,
+                      },
+                    },
+                    aggregateRating: {
+                      '@type': 'AggregateRating',
+                      ratingValue: product.rating,
+                      reviewCount: product.review_count,
+                    },
+                  })}
+                </Script>
               </div>
             </div>
           </div>
         )}
+
       </div>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <div className="border-t border-slate-200 pt-8">
-          <h2 className="mb-6 text-2xl font-bold text-slate-900">Related Products</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedProducts.map((relatedProduct) => (
-              <Link key={relatedProduct.id} href={`/product/${relatedProduct.id}`}>
-                <div className="group cursor-pointer space-y-3 rounded-lg border border-slate-200 p-4 hover:border-emerald-300 hover:shadow-lg transition">
-                  <div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">
-                    {relatedProduct.images[0] ? (
-                      <Image
-                        src={relatedProduct.images[0]}
-                        alt={relatedProduct.name}
-                        fill // Removed duplicate className
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover group-hover:scale-105 transition"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-slate-400">No Image</div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold line-clamp-2">{relatedProduct.name}</h3>
-                    <p className="text-sm text-slate-600">{relatedProduct.vendor.shop_name}</p>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="font-bold text-emerald-600">
-                        {formatCurrency(relatedProduct.price, currency.code, currency.locale)}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                        <span className="text-xs text-slate-600">{relatedProduct.rating.toFixed(1)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org/',
-            '@type': 'Product',
-            name: product.name,
-            image: product.images,
-            description: product.description,
-            sku: product.sku,
-            brand: {
-              '@type': 'Brand',
-              name: product.vendor.shop_name,
-            },
-            offers: {
-              '@type': 'Offer',
-              url: typeof window !== 'undefined' ? window.location.href : '',
-              priceCurrency: currency.code,
-              price: product.price,
-              priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-              seller: {
-                '@type': 'Organization',
-                name: product.vendor.shop_name,
-              },
-            },
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: product.rating,
-              reviewCount: product.review_count,
-            },
-          }),
-        }}
-      />
     </div>
   );
 }

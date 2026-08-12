@@ -70,7 +70,7 @@ export default function RegisterPage() {
           : undefined
       );
       toast.success("Account created successfully.");
-      router.push(activeRole === "vendor" ? "/vendor/onboarding" : "/marketplace");
+      router.push(activeRole === "vendor" ? "/vendor/dashboard" : "/marketplace");
     } catch (error: any) {
       toast.error(error.message ?? "Registration failed. Please try again.");
     }

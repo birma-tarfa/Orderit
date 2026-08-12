@@ -27,11 +27,8 @@ export async function POST(request: NextRequest) {
     category_id,
     price,
     compare_price,
-    preparation_time,
     minimum_order,
-    is_available_today,
-    dietary_tags,
-    spice_level,
+    tags,
     stock_quantity,
     sku,
     is_active,
@@ -42,10 +39,7 @@ export async function POST(request: NextRequest) {
     !name ||
     !category_id ||
     !price ||
-    preparation_time == null ||
     minimum_order == null ||
-    is_available_today == null ||
-    !spice_level ||
     stock_quantity == null ||
     !Array.isArray(images)
   ) {
@@ -62,11 +56,8 @@ export async function POST(request: NextRequest) {
         category_id,
         price,
         compare_price: compare_price ?? null,
-        preparation_time,
         minimum_order,
-        is_available_today,
-        dietary_tags: Array.isArray(dietary_tags) ? dietary_tags : [],
-        spice_level,
+        tags: Array.isArray(tags) ? tags : [],
         stock_quantity,
         sku: sku || null,
         is_active,

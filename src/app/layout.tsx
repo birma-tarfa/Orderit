@@ -16,6 +16,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Tradeloft - Shop Anything From Trusted Local Vendors",
   description: "Shop electronics, fashion, food, beauty, jewelry, watches, and more from verified local vendors",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    viewportFit: "cover",
+  },
 };
 
 export default function RootLayout({

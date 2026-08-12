@@ -61,12 +61,25 @@ export const LOCATIONS = NIGERIAN_STATES;
 
 export const PRODUCT_CATEGORIES = [
   "Electronics",
-  "Fashion",
-  "Food & Drinks",
-  "Beauty",
-  "Home & Kitchen",
-  "Jewelry & Watches",
   "Phones & Accessories",
+  "Computers & Laptops",
+  "Fashion",
+  "Beauty & Personal Care",
+  "Jewelry & Watches",
+  "Home & Kitchen",
+  "Furniture",
+  "Food & Drinks",
+  "Groceries",
+  "Health & Wellness",
+  "Baby & Kids",
+  "Toys & Games",
+  "Sports & Outdoors",
+  "Automotive",
+  "Books & Media",
+  "Office & Stationery",
+  "Pet Supplies",
+  "Garden & Outdoor",
+  "Arts & Crafts",
   "Agriculture",
   "Services",
   "Others",
@@ -80,14 +93,10 @@ export type CurrencyOption = {
 };
 
 export const CURRENCY_OPTIONS: CurrencyOption[] = [
-  { code: "USD", label: "USD - $", locale: "en-US", symbol: "$" },
-  { code: "EUR", label: "EUR - €", locale: "de-DE", symbol: "€" },
-  { code: "GBP", label: "GBP - £", locale: "en-GB", symbol: "£" },
   { code: "NGN", label: "NGN - ₦", locale: "en-NG", symbol: "₦" },
-  { code: "JPY", label: "JPY - ¥", locale: "ja-JP", symbol: "¥" },
 ];
 
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "NGN";
 
 export function getCurrencyOption(code: string) {
   return CURRENCY_OPTIONS.find((option) => option.code === code) ?? CURRENCY_OPTIONS[0];

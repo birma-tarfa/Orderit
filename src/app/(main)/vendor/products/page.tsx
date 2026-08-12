@@ -47,17 +47,10 @@ export default function VendorProductsPage() {
         return;
       }
 
-      const { data: vp } = await supabase
-        .from("vendor_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-      const vendorId = vp?.id;
-
       const { data, error: productsError } = await supabase
         .from("products")
         .select(`id,name,price,stock_quantity,is_active,images,category_id`)
-        .eq("vendor_id", vendorId)
+        .eq("vendor_id", user.id)
         .order("created_at", { ascending: false });
 
       if (productsError) {

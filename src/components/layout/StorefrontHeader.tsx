@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/Button';
 import type { VendorProfile } from '@/types';
 
 interface StorefrontHeaderProps {
-  vendor: VendorProfile & {
+  vendor: Omit<VendorProfile, 'created_at'> & {
+    user_id: string;
     total_products: number;
     total_sales: number;
     rating: number;
     review_count: number;
     location?: string;
+    phone?: string;
     created_at: string;
     is_verified: boolean;
   };

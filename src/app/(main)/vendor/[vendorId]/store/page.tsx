@@ -4,9 +4,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { StorefrontHeader } from '@/components/layout/StorefrontHeader';
 import ClientSideProductGrid from '@/components/vendor/ClientSideProductGrid';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { Search, Filter, Package, Star, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { Package, Star, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import type { Product, VendorProfile, Category } from '@/types';
 
 interface VendorStorePageProps {
@@ -15,12 +14,14 @@ interface VendorStorePageProps {
   };
 }
 
-interface VendorWithStats extends VendorProfile {
+interface VendorWithStats extends Omit<VendorProfile, 'created_at'> {
+  user_id: string;
   total_products: number;
   total_sales: number;
   rating: number;
   review_count: number;
   location?: string;
+  phone?: string;
   created_at: string;
   is_verified: boolean;
 }
@@ -64,9 +65,8 @@ export async function generateStaticParams() {
 
     // Get top 50 vendors for ISR
     const { data: vendors } = await supabase
-      .from('users')
+      .from('vendor_profiles')
       .select('id')
-      .eq('role', 'vendor')
       .order('total_sales', { ascending: false })
       .limit(50);
 
@@ -99,7 +99,7 @@ async function getVendorData(vendorId: string) {
   const { data: products } = await supabase
     .from('products')
     .select('id, rating, review_count')
-    .eq('vendor_id', vendorId)
+    .eq('vendor_id', vendor.user_id)
     .eq('is_active', true);
 
   const totalProducts = products?.length || 0;
@@ -201,8 +201,8 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
     }
   }
 
-  const products = await getVendorProducts(params.vendorId, undefined, undefined, isOwner);
-  const categories = await getVendorCategories(params.vendorId);
+  const products = await getVendorProducts(vendor.user_id, undefined, undefined, isOwner);
+  const categories = await getVendorCategories(vendor.user_id);
 
   // Ensure products have vendor name for ProductCard
   const productsWithVendor = products.map((p: any) => ({
@@ -277,7 +277,6 @@ export default async function VendorStorePage({ params }: VendorStorePageProps) 
           ) : (
             <div>
               {/* Client-side product grid and owner controls */}
-              {/* @ts-expect-error Server component passing JSON */}
               <ClientSideProductGrid vendorId={params.vendorId} products={productsWithVendor} isOwner={isOwner} vendorName={vendor.shop_name} categories={categories} />
             </div>
           )}

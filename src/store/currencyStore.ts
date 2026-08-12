@@ -6,6 +6,6 @@ interface CurrencyState {
 }
 
 export const useCurrencyStore = create<CurrencyState>((set) => ({
-  currency: "USD",
+  currency: "NGN",
   setCurrency: (currency) => set({ currency }),
 }));

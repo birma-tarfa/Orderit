@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Search, Filter, X, ChevronDown, ChevronUp, Star } from "lucide-react";
-import { CURRENCY_OPTIONS, getCurrencyOption, LOCATIONS, formatCurrency } from "@/constants";
+import { getCurrencyOption, LOCATIONS, formatCurrency } from "@/constants";
 import { useCurrencyStore } from "@/store/currencyStore";
 import type { Product, Category } from "@/types";
 
@@ -60,7 +60,6 @@ function SearchContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const currencyCode = useCurrencyStore((state) => state.currency);
-  const setCurrency = useCurrencyStore((state) => state.setCurrency);
   const currency = getCurrencyOption(currencyCode);
 
   // Update URL when filters change
@@ -326,24 +325,6 @@ function SearchContent() {
             </div>
           </div>
 
-          <div>
-            <h3 className="mb-3 font-medium">Currency</h3>
-            <select
-              value={currency.code}
-              onChange={(e) => {
-                const selected = e.target.value;
-                setCurrency(selected);
-                window.localStorage.setItem("currency", selected);
-              }}
-              className="w-full rounded-md border border-slate-300 px-3 py-2"
-            >
-              {CURRENCY_OPTIONS.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* Location */}
           <div>

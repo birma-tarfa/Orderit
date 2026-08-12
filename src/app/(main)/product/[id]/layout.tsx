@@ -41,9 +41,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
     // Fetch vendor and category separately
     const { data: vendor } = await supabase
-      .from('users')
+      .from('vendor_profiles')
       .select('shop_name')
-      .eq('id', product.vendor_id)
+      .eq('user_id', product.vendor_id)
       .single();
 
     const { data: category } = await supabase

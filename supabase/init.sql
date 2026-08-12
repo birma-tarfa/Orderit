@@ -4,6 +4,20 @@
 create extension if not exists "pgcrypto";
 
 -- Helper functions for role checks
+-- moved below users table creation because they reference public.users
+
+-- users table
+create table if not exists public.users (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  full_name text,
+  phone text,
+  role text not null default 'buyer' check (role in ('buyer', 'vendor', 'admin')),
+  avatar_url text,
+  created_at timestamptz not null default now()
+);
+
+-- Helper functions for role checks
 create or replace function public.is_admin() returns boolean stable language sql as $$
   select exists (
     select 1
@@ -30,17 +44,6 @@ create or replace function public.is_buyer() returns boolean stable language sql
       and role = 'buyer'
   );
 $$;
-
--- users table
-create table if not exists public.users (
-  id uuid primary key default gen_random_uuid(),
-  email text not null unique,
-  full_name text,
-  phone text,
-  role text not null default 'buyer' check (role in ('buyer', 'vendor', 'admin')),
-  avatar_url text,
-  created_at timestamptz not null default now()
-);
 
 -- vendor profiles table
 create table if not exists public.vendor_profiles (
@@ -76,11 +79,8 @@ create table if not exists public.products (
   description text,
   price numeric(12,2) not null,
   compare_price numeric(12,2),
-  preparation_time int not null default 20,
   minimum_order int not null default 1,
-  is_available_today boolean not null default true,
-  dietary_tags text[] not null default '{}',
-  spice_level text not null default 'Medium',
+  tags text[] not null default '{}',
   images text[] not null default '{}',
   stock_quantity int not null default 0,
   sku text unique,
@@ -90,12 +90,39 @@ create table if not exists public.products (
   created_at timestamptz not null default now()
 );
 
+alter table public.products drop column if exists preparation_time;
+alter table public.products drop column if exists spice_level;
+alter table public.products drop column if exists is_available_today;
+alter table public.orders add column if not exists delivery_code text;
+
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'dietary_tags'
+  ) then
+    alter table public.products rename column dietary_tags to tags;
+  end if;
+end $$;
+
+-- cart_items table
+create table if not exists public.cart_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  product_id uuid not null references public.products(id) on delete cascade,
+  vendor_id uuid not null references public.vendor_profiles(id) on delete cascade,
+  quantity int not null default 1 check (quantity > 0),
+  created_at timestamptz not null default now(),
+  unique (user_id, product_id)
+);
+
 -- orders table
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   buyer_id uuid not null references public.users(id) on delete cascade,
   vendor_id uuid not null references public.users(id) on delete cascade,
   status text not null check (status in ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')),
+  delivery_code text,
   subtotal numeric(12,2) not null,
   delivery_fee numeric(12,2) not null default 0,
   total numeric(12,2) not null,
@@ -155,6 +182,7 @@ alter table public.users enable row level security;
 alter table public.vendor_profiles enable row level security;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
+alter table public.cart_items enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.reviews enable row level security;
@@ -177,14 +205,14 @@ create policy "Admins can manage categories" on public.categories for all using 
 
 -- Products policies
 create policy "Public can view active products" on public.products for select using (is_active = true);
-create policy "Vendor can manage own products" on public.products for select using (auth.uid() = vendor_id or public.is_admin()) with check (auth.uid() = vendor_id or public.is_admin());
-create policy "Vendor can insert own products" on public.products for insert using (auth.uid() = vendor_id or public.is_admin()) with check (auth.uid() = vendor_id or public.is_admin());
+create policy "Vendor can manage own products" on public.products for select using (auth.uid() = vendor_id or public.is_admin());
+create policy "Vendor can insert own products" on public.products for insert with check (auth.uid() = vendor_id or public.is_admin());
 create policy "Vendor can update own products" on public.products for update using (auth.uid() = vendor_id or public.is_admin()) with check (auth.uid() = vendor_id or public.is_admin());
 create policy "Admins can manage products" on public.products for all using (public.is_admin());
 
 -- Orders policies
 create policy "Buyer can view own orders" on public.orders for select using (auth.uid() = buyer_id or auth.uid() = vendor_id or public.is_admin());
-create policy "Buyer can insert own orders" on public.orders for insert using (auth.uid() = buyer_id or public.is_admin()) with check (auth.uid() = buyer_id or public.is_admin());
+create policy "Buyer can insert own orders" on public.orders for insert with check (auth.uid() = buyer_id or public.is_admin());
 create policy "Buyer can update own orders" on public.orders for update using (auth.uid() = buyer_id or auth.uid() = vendor_id or public.is_admin()) with check (auth.uid() = buyer_id or auth.uid() = vendor_id or public.is_admin());
 create policy "Admins can manage orders" on public.orders for all using (public.is_admin());
 
@@ -200,19 +228,32 @@ create policy "Admins can manage order items" on public.order_items for all usin
 
 -- Reviews policies
 create policy "Public can view reviews" on public.reviews for select using (true);
-create policy "Buyers can insert own reviews" on public.reviews for insert using (auth.uid() = buyer_id or public.is_admin()) with check (auth.uid() = buyer_id or public.is_admin());
+create policy "Buyers can insert own reviews" on public.reviews for insert with check (auth.uid() = buyer_id or public.is_admin());
 create policy "Buyers can update own reviews" on public.reviews for update using (auth.uid() = buyer_id or public.is_admin()) with check (auth.uid() = buyer_id or public.is_admin());
 create policy "Admins can manage reviews" on public.reviews for all using (public.is_admin());
 
+-- Cart items policies
+create policy "Users can view own cart items" on public.cart_items
+  for select using (auth.uid() = user_id);
+
+create policy "Users can insert own cart items" on public.cart_items
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can update own cart items" on public.cart_items
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "Users can delete own cart items" on public.cart_items
+  for delete using (auth.uid() = user_id);
+
 -- Messages policies
 create policy "Message participants can view messages" on public.messages for select using (auth.uid() = sender_id or auth.uid() = receiver_id or public.is_admin());
-create policy "Sender can insert message" on public.messages for insert using (auth.uid() = sender_id or public.is_admin()) with check (auth.uid() = sender_id or public.is_admin());
+create policy "Sender can insert message" on public.messages for insert with check (auth.uid() = sender_id or public.is_admin());
 create policy "Participants can update own messages" on public.messages for update using (auth.uid() = sender_id or public.is_admin()) with check (auth.uid() = sender_id or public.is_admin());
 create policy "Admins can manage messages" on public.messages for delete using (public.is_admin());
 
 -- Notifications policies
 create policy "Users can view own notifications" on public.notifications for select using (auth.uid() = user_id or public.is_admin());
-create policy "Users can insert own notifications" on public.notifications for insert using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
+create policy "Users can insert own notifications" on public.notifications for insert with check (auth.uid() = user_id or public.is_admin());
 create policy "Users can update own notifications" on public.notifications for update using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
 create policy "Admins can manage notifications" on public.notifications for all using (public.is_admin());
 
@@ -226,6 +267,7 @@ create index if not exists idx_products_vendor_id on public.products(vendor_id);
 create index if not exists idx_products_category_id on public.products(category_id);
 create index if not exists idx_products_is_active on public.products(is_active);
 create index if not exists idx_products_created_at on public.products(created_at);
+create index if not exists idx_cart_items_user_id on public.cart_items(user_id);
 create index if not exists idx_orders_buyer_id on public.orders(buyer_id);
 create index if not exists idx_orders_vendor_id on public.orders(vendor_id);
 create index if not exists idx_orders_status on public.orders(status);

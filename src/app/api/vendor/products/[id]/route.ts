@@ -42,11 +42,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
   if (body.category_id !== undefined) updatePayload.category_id = body.category_id;
   if (body.price !== undefined) updatePayload.price = body.price;
   if (body.compare_price !== undefined) updatePayload.compare_price = body.compare_price;
-  if (body.preparation_time !== undefined) updatePayload.preparation_time = body.preparation_time;
   if (body.minimum_order !== undefined) updatePayload.minimum_order = body.minimum_order;
-  if (body.is_available_today !== undefined) updatePayload.is_available_today = body.is_available_today;
-  if (body.dietary_tags !== undefined) updatePayload.dietary_tags = body.dietary_tags;
-  if (body.spice_level !== undefined) updatePayload.spice_level = body.spice_level;
+  if (body.tags !== undefined) updatePayload.tags = Array.isArray(body.tags) ? body.tags : [];
   if (body.stock_quantity !== undefined) updatePayload.stock_quantity = body.stock_quantity;
   if (body.sku !== undefined) updatePayload.sku = body.sku;
   if (body.is_active !== undefined) updatePayload.is_active = body.is_active;

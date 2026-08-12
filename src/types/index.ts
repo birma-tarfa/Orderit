@@ -40,11 +40,8 @@ export interface Product {
   description?: string;
   price: number;
   compare_price?: number;
-  preparation_time: number;
   minimum_order: number;
-  is_available_today: boolean;
-  dietary_tags: string[];
-  spice_level: string;
+  tags: string[];
   images: string[];
   stock_quantity: number;
   sku?: string;
