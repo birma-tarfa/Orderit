@@ -17,6 +17,16 @@ Tradeloft supports a broad range of categories:
 
 ## Getting Started
 
+### Configure Supabase
+
+Create a local environment file and add the public API values from your Supabase project's API settings:
+
+```bash
+cp .env.example .env.local
+```
+
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`, then restart the development server. Do not commit `.env.local`.
+
 First, run the development server:
 
 ```bash
